@@ -1,3 +1,7 @@
-FROM nginx:alpine
-COPY adit-ai-taskmanager.html /usr/share/nginx/html/index.html
-EXPOSE 80
+FROM node:18-alpine
+WORKDIR /app
+COPY package*.json ./
+RUN npm install
+COPY . .
+EXPOSE 3000
+CMD ["node", "server.js"]

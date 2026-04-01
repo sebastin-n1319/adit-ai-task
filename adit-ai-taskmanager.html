@@ -3861,9 +3861,25 @@ const ASANA_CLIENT_ID  = '1213835252509979';
 const ASANA_REDIRECT   = 'https://adit-taskai.up.railway.app';
 const ASANA_OAUTH_URL  = 'https://app.asana.com/-/oauth_authorize';
 
-/* ── Auth state — check localStorage for persistent session ── */
+/* ── Auth state — check hash token (OAuth callback) or localStorage ── */
 (function() {
-  // Check localStorage first (persists across sessions)
+  // 1. Check if Asana just redirected back with a token in the hash
+  const hash = window.location.hash;
+  if (hash && hash.includes('token=')) {
+    const tokenMatch = hash.match(/token=([^&]+)/);
+    if (tokenMatch) {
+      const token = decodeURIComponent(tokenMatch[1]);
+      // Clear token from URL so it doesn't linger in browser history
+      history.replaceState(null, '', window.location.pathname);
+      // Verify and log in with this token
+      setLoginLoading(true, 'Signing you in…');
+      document.getElementById('login-screen').classList.remove('hidden');
+      verifyAndLogin(token);
+      return;
+    }
+  }
+
+  // 2. Check localStorage for a saved session (persistent login)
   const sess = localStorage.getItem('adit_auth') || sessionStorage.getItem('adit_auth');
   if (sess) {
     try {
@@ -3871,7 +3887,8 @@ const ASANA_OAUTH_URL  = 'https://app.asana.com/-/oauth_authorize';
       if (data.token) { applySession(data); return; }
     } catch(e) {}
   }
-  // Not authenticated — show login
+
+  // 3. Show login screen
   document.getElementById('login-screen').classList.remove('hidden');
 })();
 
@@ -3894,22 +3911,9 @@ function applySession(data) {
 /* ─── "Sign in with Asana" button handler ─── */
 function startAsanaLogin() {
   document.getElementById('lp-error')?.classList.remove('show');
-  setLoginLoading(true, 'Opening Asana…');
-  // Open Asana token page in new tab
-  window.open('https://app.asana.com/0/my-apps', '_blank');
-  setTimeout(() => {
-    setLoginLoading(false);
-    // Show token paste section with instructions
-    const section = document.getElementById('lp-token-section');
-    if (section) section.style.display = 'block';
-    // Update label to guide user
-    const label = document.querySelector('.lp-token-label');
-    if (label) label.innerHTML = `
-      <strong style="color:#002D42">Asana opened in a new tab.</strong><br>
-      Click <strong>"Create new token"</strong> → copy it → paste below.<br>
-      <span style="font-size:10px;font-weight:400;color:#8FA5B4">You only need to do this once — we'll remember you.</span>`;
-    setTimeout(() => document.getElementById('lp-pat')?.focus(), 120);
-  }, 800);
+  setLoginLoading(true, 'Redirecting to Asana…');
+  // Redirect to our backend which handles the OAuth flow
+  window.location.href = '/auth/asana';
 }
 
 /* ─── Toggle advanced PAT section ─── */
