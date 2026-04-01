@@ -724,10 +724,26 @@ body.dark .notif-panel{background:#162230;border-color:#243446;}
 /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
    DARK MODE
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
-body.dark{--bg:#0F1923;--bg2:#162230;--bd:#243446;--bd-l:#1D2E40;--wh:#162230;--tx:#C8DCF0;--tx-m:#8FAEC5;--tx-s:#4A6880;--nv-l:#0A1D2E;--sh:0 1px 12px rgba(0,0,0,.35);--sh-m:0 4px 24px rgba(0,0,0,.45);}
+body.dark{--bg:#0F1923;--bg2:#162230;--bd:#243446;--bd-l:#1D2E40;--wh:#162230;--tx:#D4E8F8;--tx-m:#8FAEC5;--tx-s:#6A8EA5;--nv-l:#0A1D2E;--sh:0 1px 12px rgba(0,0,0,.35);--sh-m:0 4px 24px rgba(0,0,0,.45);}
 body.dark .sidebar{background:#0A1520;}
 body.dark .topbar{background:#0F1923;border-color:#1D2E40;}
-body.dark .kpi,body.dark .card,body.dark .ai-panel,body.dark .rb-preview,body.dark .db-sidebar,body.dark .db-widget{background:#162230;border-color:#243446;}
+body.dark .kpi,body.dark .card,body.dark .ai-panel,body.dark .rb-preview,body.dark .db-sidebar,body.dark .db-widget{background:#1A2B3E;border-color:#243446;}
+/* KPI values — navy text invisible on dark bg; fix to light */
+body.dark .kpi-val{color:#D4E8F8!important;}
+body.dark .kpi-lbl{color:#6A8EA5!important;}
+body.dark .kpi-sub{color:#6A8EA5!important;}
+body.dark .kpi{background:linear-gradient(145deg,#1A2B3E,#162230)!important;border-color:#2A3E55!important;}
+body.dark .kpi:hover{border-color:var(--or)!important;box-shadow:0 8px 28px rgba(0,0,0,.4)!important;}
+/* Icon backgrounds — light pastels look glaring on dark bg */
+body.dark .ico-nv{background:rgba(0,45,66,.5);}
+body.dark .ico-gn{background:rgba(15,183,122,.15);}
+body.dark .ico-or{background:rgba(244,137,31,.15);}
+body.dark .ico-tl{background:rgba(34,184,207,.15);}
+/* Topbar chips */
+body.dark .topbar-chip{background:#1A2B3E!important;border-color:#2A3E55!important;color:#8FAEC5!important;}
+/* Sidebar active nav */
+body.dark .nav-item.active{background:rgba(244,137,31,.18)!important;}
+body.dark .nav-item:hover{background:rgba(255,255,255,.05)!important;}
 body.dark .bbl{background:#1D2E40!important;border-color:#243446!important;color:#8FAEC5!important;}
 body.dark .msg.user .bbl{background:linear-gradient(135deg,#0A4060,#0F5580)!important;color:rgba(255,255,255,.9)!important;}
 body.dark .ap-foot{background:#0F1923;border-color:#1D2E40;}
@@ -4062,13 +4078,24 @@ async function fetchLiveData(token) {
 
     dlStep(3);
 
-    /* ── Step 3: get projects ── */
+    /* ── Step 3: get projects — only ones the user has tasks in ── */
+    // Collect project GIDs from the user's own tasks
+    const myProjGids = new Set();
+    rawTasks.forEach(t => (t.projects || []).forEach(p => myProjGids.add(p.gid)));
+
+    // Fetch all accessible projects (Asana scopes this to the user's permissions)
     const projR = await fetch(
       `${ASANA_BASE}/projects?workspace=${wsGid}&archived=false&opt_fields=gid,name,color,task_counts&limit=100`,
       { headers: hdrs }
     );
     const projData = await projR.json();
-    const rawProjs = (projData.data || []).filter(p => (p.task_counts?.num_tasks || 0) > 0);
+    let rawProjs = (projData.data || []).filter(p => (p.task_counts?.num_tasks || 0) > 0);
+
+    // Filter to only projects the user has tasks in; fall back to all if none match
+    if (myProjGids.size > 0) {
+      const filtered = rawProjs.filter(p => myProjGids.has(p.gid));
+      if (filtered.length > 0) rawProjs = filtered;
+    }
 
     dlStep(4);
 
