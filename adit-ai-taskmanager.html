@@ -391,14 +391,28 @@ body{font-family:'Poppins',sans-serif;background:var(--bg);color:var(--tx);font-
    AI SIDE PANEL
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
 .ai-panel{
-  width:348px;flex-shrink:0;
+  width:420px;flex-shrink:0;
   background:var(--wh);
   border-left:1.5px solid var(--bd);
   display:flex;flex-direction:column;
   overflow:hidden;
-  box-shadow:-3px 0 18px rgba(0,45,66,.06);
+  box-shadow:-4px 0 24px rgba(0,45,66,.09);
   animation:slideRight .45s ease both;
+  transition:width .3s cubic-bezier(.4,0,.2,1);
 }
+
+/* ── AI Focus Mode ── */
+.layout.ai-focus .sidebar{width:62px!important;}
+.layout.ai-focus .sidebar .sb-head{padding:12px 8px;}
+.layout.ai-focus .sidebar .sb-logo-wrap,.layout.ai-focus .sidebar .sb-suite,
+.layout.ai-focus .sidebar .sb-section-label,.layout.ai-focus .sidebar .nav-label,
+.layout.ai-focus .sidebar .nb,.layout.ai-focus .sidebar .sb-footer{display:none!important;}
+.layout.ai-focus .sidebar .nav-item{justify-content:center;padding:10px 0;border-radius:8px;margin:2px 6px;}
+.layout.ai-focus .main{display:none!important;}
+.layout.ai-focus .ai-panel{width:100%;border-left:none;box-shadow:none;}
+.layout.ai-focus .ap-msgs{max-width:780px;margin:0 auto;width:100%;}
+.layout.ai-focus .ap-foot-inner{max-width:780px;margin:0 auto;width:100%;}
+.layout.ai-focus .ap-ctx,.layout.ai-focus .ap-mode{max-width:780px;margin:0 auto;width:100%;}
 
 /* Panel top header */
 .ap-head{
@@ -724,26 +738,83 @@ body.dark .notif-panel{background:#162230;border-color:#243446;}
 /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
    DARK MODE
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
-body.dark{--bg:#0F1923;--bg2:#162230;--bd:#243446;--bd-l:#1D2E40;--wh:#162230;--tx:#D4E8F8;--tx-m:#8FAEC5;--tx-s:#6A8EA5;--nv-l:#0A1D2E;--sh:0 1px 12px rgba(0,0,0,.35);--sh-m:0 4px 24px rgba(0,0,0,.45);}
-body.dark .sidebar{background:#0A1520;}
-body.dark .topbar{background:#0F1923;border-color:#1D2E40;}
-body.dark .kpi,body.dark .card,body.dark .ai-panel,body.dark .rb-preview,body.dark .db-sidebar,body.dark .db-widget{background:#1A2B3E;border-color:#243446;}
-/* KPI values — navy text invisible on dark bg; fix to light */
-body.dark .kpi-val{color:#D4E8F8!important;}
-body.dark .kpi-lbl{color:#6A8EA5!important;}
-body.dark .kpi-sub{color:#6A8EA5!important;}
-body.dark .kpi{background:linear-gradient(145deg,#1A2B3E,#162230)!important;border-color:#2A3E55!important;}
-body.dark .kpi:hover{border-color:var(--or)!important;box-shadow:0 8px 28px rgba(0,0,0,.4)!important;}
-/* Icon backgrounds — light pastels look glaring on dark bg */
-body.dark .ico-nv{background:rgba(0,45,66,.5);}
-body.dark .ico-gn{background:rgba(15,183,122,.15);}
-body.dark .ico-or{background:rgba(244,137,31,.15);}
-body.dark .ico-tl{background:rgba(34,184,207,.15);}
-/* Topbar chips */
-body.dark .topbar-chip{background:#1A2B3E!important;border-color:#2A3E55!important;color:#8FAEC5!important;}
-/* Sidebar active nav */
-body.dark .nav-item.active{background:rgba(244,137,31,.18)!important;}
-body.dark .nav-item:hover{background:rgba(255,255,255,.05)!important;}
+body.dark{
+  --bg:#0C1520;--bg2:#111E2C;--bd:#1E3044;--bd-l:#162537;
+  --wh:#111E2C;--tx:#D6EAF8;--tx-m:#8BAEC8;--tx-s:#5A7E99;
+  --nv-l:#0A1825;--sh:0 1px 14px rgba(0,0,0,.4);--sh-m:0 6px 28px rgba(0,0,0,.5);
+}
+body.dark .sidebar{background:#080F18;}
+body.dark .topbar{background:#0C1520;border-color:#1E3044;}
+body.dark .view-content,.body.dark .view-pane{background:#0C1520;}
+/* Cards & panels */
+body.dark .kpi,body.dark .card,body.dark .rb-preview,body.dark .db-sidebar,body.dark .db-widget{
+  background:linear-gradient(145deg,#13202E,#0F1B27);border-color:#1E3044;
+}
+body.dark .ai-panel{background:#0E1B28;border-color:#1E3044;}
+body.dark .ap-msgs{background:#0E1B28;}
+body.dark .ap-foot{background:#0C1520;border-color:#1E3044;}
+/* KPI — navy text invisible on dark bg */
+body.dark .kpi-val{color:#E8F4FF!important;text-shadow:0 0 20px rgba(100,180,255,.15);}
+body.dark .kpi-lbl{color:#5A7E99!important;}
+body.dark .kpi-sub{color:#5A7E99!important;}
+body.dark .kpi{border-color:#1E3044!important;}
+body.dark .kpi:hover{border-color:var(--or)!important;box-shadow:0 8px 32px rgba(0,0,0,.5)!important;background:linear-gradient(145deg,#1A2D40,#13202E)!important;}
+/* KPI accent bars */
+body.dark .kpi-bar{opacity:.7;}
+/* Icon backgrounds — fix glaring pastels */
+body.dark .ico-nv{background:rgba(0,64,100,.4);}
+body.dark .ico-gn{background:rgba(15,183,122,.12);}
+body.dark .ico-or{background:rgba(244,137,31,.12);}
+body.dark .ico-tl{background:rgba(34,184,207,.12);}
+/* Topbar */
+body.dark .topbar-chip{background:#13202E!important;border-color:#1E3044!important;color:#8BAEC8!important;}
+/* Sidebar nav */
+body.dark .nav-item{color:#6A90A8;}
+body.dark .nav-item.active{background:rgba(244,137,31,.15)!important;color:#F4891F!important;}
+body.dark .nav-item:hover{background:rgba(255,255,255,.04)!important;color:#D6EAF8!important;}
+body.dark .nav-ico{stroke:#6A90A8;}
+body.dark .nav-item.active .nav-ico{stroke:#F4891F;}
+/* Cards in main area */
+body.dark .card,.body.dark .tasks-table{background:#111E2C;border-color:#1E3044;}
+body.dark .vp-header{background:#0C1520;border-color:#1E3044;}
+/* Task table rows */
+body.dark .tt-head{background:#080F18;border-color:#1E3044;color:#3D6178;}
+body.dark .tt-row{border-color:#162537;}
+body.dark .tt-row:hover{background:#162537;}
+body.dark .tt-name{color:#D6EAF8;}
+/* AI panel inner */
+body.dark .ap-input{background:#13202E;border-color:#1E3044;}
+body.dark .ap-input input{color:#D6EAF8;}
+body.dark .ap-input input::placeholder{color:#3D6178;}
+body.dark .bbl{background:#162537!important;border-color:#1E3044!important;color:#C0DAF0!important;}
+body.dark .msg.user .bbl{background:linear-gradient(135deg,#0A3A5C,#0D4E7A)!important;color:#E8F4FF!important;}
+body.dark .chip{background:#13202E!important;border-color:#1E3044!important;color:#8BAEC8!important;}
+body.dark .sug{background:#13202E;border-color:#1E3044;color:#8BAEC8;}
+body.dark .sug:hover{border-color:var(--or);color:var(--or);}
+/* Projects */
+body.dark .proj-card{background:#111E2C;border-color:#1E3044;}
+body.dark .pc-name{color:#D6EAF8;}
+body.dark .pc-bar-wrap{background:#1E3044;}
+/* Standup */
+body.dark .standup-card{background:#111E2C;border-color:#1E3044;}
+body.dark .ss-item{color:#8BAEC8;border-color:#1E3044;}
+/* Report */
+body.dark .rpt-kpi{background:#13202E;}
+body.dark .rpt-tbl th{background:#080F18;}
+body.dark .rpt-tbl td{border-color:#1E3044;}
+/* Timeline */
+body.dark .timeline-wrap{background:#111E2C;border-color:#1E3044;}
+body.dark .tl-head{background:#080F18;border-color:#1E3044;}
+/* Predictions / Risk */
+body.dark .pred-card,.dark .risk-item{background:#111E2C;border-color:#1E3044;}
+/* Data table in AI */
+body.dark .data-tbl{background:#13202E;border-color:#1E3044;}
+body.dark .dt-head{background:#0C1520;border-color:#1E3044;color:#5A7E99;}
+body.dark .dt-row{border-color:#162537;color:#D6EAF8;}
+/* Scrollbars */
+body.dark ::-webkit-scrollbar-track{background:#0C1520;}
+body.dark ::-webkit-scrollbar-thumb{background:#1E3044;}
+body.dark ::-webkit-scrollbar-thumb:hover{background:#2A4060;}
 body.dark .bbl{background:#1D2E40!important;border-color:#243446!important;color:#8FAEC5!important;}
 body.dark .msg.user .bbl{background:linear-gradient(135deg,#0A4060,#0F5580)!important;color:rgba(255,255,255,.9)!important;}
 body.dark .ap-foot{background:#0F1923;border-color:#1D2E40;}
@@ -2490,9 +2561,12 @@ body.dark .profile-drop{background:#162230;border-color:#243446;}
           </div>
           <div>
             <div class="ap-name">adit ai</div>
-            <div class="ap-role">Asana Intelligence · Sebastin's workspace</div>
+            <div class="ap-role" id="ap-workspace-label">Asana Intelligence · Your workspace</div>
           </div>
           <div class="ap-live"><span></span>Live</div>
+          <button onclick="toggleAIFocus()" id="ai-focus-btn" title="Focus Mode" style="margin-left:6px;background:rgba(255,255,255,.12);border:none;border-radius:7px;width:28px;height:28px;cursor:pointer;color:#fff;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .2s">
+            <svg id="ai-focus-icon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M8 3H5a2 2 0 00-2 2v3m18 0V5a2 2 0 00-2-2h-3m0 18h3a2 2 0 002-2v-3M3 16v3a2 2 0 002 2h3"/></svg>
+          </button>
         </div>
       </div>
 
@@ -2693,44 +2767,73 @@ function parseTask(text) {
 /* ━━━━━ AI RESPONSE ENGINE ━━━━━ */
 function getResponse(text) {
   const m = text.toLowerCase().trim();
-  const overdue = WS.tasks.filter(t=>t.overdue);
-  const critical = WS.projects.filter(p=>p.status==='critical');
-  const onTrack = WS.projects.filter(p=>p.status==='on-track');
+  const overdue   = WS.tasks.filter(t=>t.overdue);
+  const critical  = WS.projects.filter(p=>p.status==='critical'||p.status==='delayed');
+  const onTrack   = WS.projects.filter(p=>p.status==='on-track');
+  const myName    = WS.me.name || 'you';
+  const today     = new Date().toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
+  const totalOpen = WS.kpis?.open || WS.tasks.length;
+  const totalDone = WS.kpis?.done || 0;
+  const totalAll  = WS.kpis?.total || (totalOpen + totalDone);
+  const pct       = totalAll > 0 ? Math.round((totalDone/totalAll)*100) : 0;
 
+  function taskRows(tasks, limit=5) {
+    return tasks.slice(0,limit).map(t=>
+      `<div class="dt-row"><span style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${t.name}</span><span style="color:${t.overdue?'var(--rd)':'var(--tx-m)'};flex-shrink:0">${t.due}</span></div>`
+    ).join('');
+  }
+  function projRows(projs, limit=5) {
+    const colors={'on-track':'var(--gn)','risk':'var(--am)','critical':'var(--rd)','delayed':'var(--rd)'};
+    return projs.slice(0,limit).map(p=>
+      `<div class="dt-row"><span style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${p.name}</span><span style="color:${colors[p.status]||'var(--tx-m)'};flex-shrink:0">${p.pct}%</span></div>`
+    ).join('');
+  }
+
+  /* ── Intent matching ── */
   if (m.includes('overdue') || m.includes('late') || m.includes('missed')) {
-    return {type:'text', html:`You have <strong>${overdue.length} overdue tasks</strong>:<div class="data-tbl"><div class="dt-head"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>Overdue in Asana</div>${overdue.map(t=>`<div class="dt-row"><span>${t.name.slice(0,30)}…</span><span style="color:var(--rd)">${t.due}</span></div>`).join('')}</div><span class="sug" onclick="sendQ('set due dates')">📅 Suggest new due dates?</span>`};
+    const rows = overdue.length ? taskRows(overdue) : '<div class="dt-row"><span>No overdue tasks 🎉</span></div>';
+    return {html:`You have <strong style="color:var(--rd)">${overdue.length} overdue task${overdue.length!==1?'s':''}</strong>:<div class="data-tbl"><div class="dt-head"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>Overdue Tasks</div>${rows}</div>${overdue.length?`<span class="sug" onclick="sendQ('suggest due dates for my overdue tasks')">📅 Suggest new dates</span>`:''}${overdue.length?`<span class="sug t" onclick="setNavById('mytasks')">View in My Tasks →</span>`:''}`};
   }
   if (m.includes('project') || m.includes('status') || m.includes('progress')) {
-    return {type:'text', html:`<strong>Adit workspace</strong> — ${WS.projects.length} projects:<div class="data-tbl"><div class="dt-head"><svg viewBox="0 0 24 24"><path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/></svg>Project Summary</div><div class="dt-row"><span>✅ On Track</span><span style="color:var(--gn)">${onTrack.length} projects</span></div><div class="dt-row"><span>⚠️ At Risk</span><span style="color:var(--am)">${WS.projects.filter(p=>p.status==='risk').length}</span></div><div class="dt-row"><span>🔴 Critical</span><span style="color:var(--rd)">${critical.length}</span></div><div class="dt-row"><span>Open tasks total</span><span style="font-weight:800">577</span></div></div><span class="sug t" onclick="sendQ('Integrations project')">Deep dive: Integrations →</span>`};
+    return {html:`<strong>Your workspace</strong> — ${WS.projects.length} active projects:<div class="data-tbl"><div class="dt-head"><svg viewBox="0 0 24 24"><path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/></svg>Project Health</div><div class="dt-row"><span>✅ On Track</span><span style="color:var(--gn)">${onTrack.length}</span></div><div class="dt-row"><span>⚠️ At Risk / Delayed</span><span style="color:var(--am)">${WS.projects.filter(p=>p.status==='risk').length}</span></div><div class="dt-row"><span>🔴 Critical</span><span style="color:var(--rd)">${critical.length}</span></div><div class="dt-row"><span>Total open tasks</span><span style="font-weight:700">${totalOpen}</span></div></div>${projRows(WS.projects,4)}<span class="sug t" onclick="setNavById('projects')">View all projects →</span>${critical.length?`<span class="sug" onclick="sendQ('draft escalation for critical projects')">✏️ Draft escalation</span>`:''}`};
   }
-  if (m.includes('integrations')) {
-    const p = WS.projects.find(x=>x.name==='Integrations');
-    return {type:'text', html:`🚨 <strong>Integrations</strong> is critically behind:<div class="data-tbl"><div class="dt-head"><svg viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/></svg>Integrations Project</div><div class="dt-row"><span>Total tasks</span><span>${p.total}</span></div><div class="dt-row"><span>Completed</span><span style="color:var(--gn)">${p.done} (${p.pct}%)</span></div><div class="dt-row"><span>Open tasks</span><span style="color:var(--rd);font-weight:800">${p.open}</span></div></div>This is your highest-risk project. I recommend a priority review session this week.<span class="sug" onclick="sendQ('draft escalation message')">✏️ Draft escalation email</span>`};
+  if (m.includes('urgent') || m.includes('attention') || m.includes('risk') || m.includes('prioriti')) {
+    const items = [...overdue.slice(0,3), ...WS.tasks.filter(t=>t.priority==='Urgent').slice(0,2)];
+    return {html:`Top priority items for <strong>${myName}</strong>:<div class="data-tbl"><div class="dt-head"><svg viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/></svg>Urgent Attention Needed</div>${taskRows(items,5)}${projRows(critical,2)}</div>${overdue.length?`<span class="sug" onclick="sendQ('overdue tasks')">🔴 ${overdue.length} overdue →</span>`:''}<span class="sug t" onclick="setNavById('riskradar')">Risk Radar →</span>`};
   }
-  if (m.includes('urgent') || m.includes('attention') || m.includes('risk')) {
-    return {type:'text', html:`Top items needing attention:<div class="data-tbl"><div class="dt-head"><svg viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/></svg>Urgent Alerts</div>${critical.map(p=>`<div class="dt-row"><span>${p.name}</span><span style="color:var(--rd)">${p.pct}% done</span></div>`).join('')}${overdue.slice(0,2).map(t=>`<div class="dt-row"><span>${t.name.slice(0,25)}…</span><span style="color:var(--rd)">Overdue</span></div>`).join('')}</div><span class="sug" onclick="sendQ('draft escalation message')">✏️ Draft team escalation</span>`};
+  if (m.includes('standup') || m.includes('stand up') || m.includes('daily update') || m.includes('update for today')) {
+    const doneItems = (WS.recentDone||[]).slice(0,3);
+    const todayItems = WS.tasks.slice(0,3);
+    return {html:`<strong>Standup draft</strong> for ${today}:<div class="data-tbl"><div class="dt-head"><svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>Daily Standup — ${myName}</div><div class="dt-row" style="flex-direction:column;align-items:flex-start;gap:3px"><span style="font-weight:600">✅ Yesterday</span><span style="color:var(--tx-s);font-size:9.5px">${doneItems.length?doneItems.map(t=>t.name).join(', '):'See Asana for completed tasks'}</span></div><div class="dt-row" style="flex-direction:column;align-items:flex-start;gap:3px"><span style="font-weight:600">🎯 Today</span><span style="color:var(--tx-s);font-size:9.5px">${todayItems.map(t=>t.name).join(', ')||'No open tasks'}</span></div><div class="dt-row" style="flex-direction:column;align-items:flex-start;gap:3px"><span style="font-weight:600">🚧 Blockers</span><span style="color:var(--tx-s);font-size:9.5px">${overdue.length?overdue.slice(0,2).map(t=>t.name).join(', '):'None'}</span></div></div><span class="sug" onclick="setNavById('standup')">📋 Full standup view →</span><span class="sug t" onclick="copyStandup()">Copy to clipboard</span>`};
   }
-  if (m.includes('team') || m.includes('workload') || m.includes('who')) {
-    return {type:'text', html:`<strong>Team workload</strong> summary:<div class="data-tbl"><div class="dt-head"><svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>Team Overview</div><div class="dt-row"><span>Sebastin N (you)</span><span style="color:var(--rd)">9 tasks 🔴</span></div><div class="dt-row"><span>Ali Jhaver</span><span>3 projects owned</span></div><div class="dt-row"><span>Malav</span><span>Dev Backend lead</span></div><div class="dt-row"><span>Frances St. Cyr</span><span>CSM lead, 22 open</span></div></div>You have the highest individual load. Want me to find tasks to delegate?<span class="sug t" onclick="sendQ('which tasks can I delegate')">🔄 Tasks I can delegate →</span>`};
+  if (m.includes('escalat') || (m.includes('email') && m.includes('draft'))) {
+    const critList = critical.slice(0,3).map(p=>`• <strong>${p.name}</strong> — ${p.open} open tasks (${p.pct}% done)`).join('<br/>');
+    return {html:`Here's a draft escalation email:<div style="font-size:10px;color:var(--tx-m);padding:10px;background:var(--bg);border-radius:8px;margin-top:8px;line-height:1.7;border:1px solid var(--bd)"><strong>Subject:</strong> Urgent: Project Review Required — ${today}<br/><br/>Hi team,<br/><br/>The following projects need immediate attention:<br/>${critList||'• Multiple projects at risk'}<br/><br/>Can we align on next steps by EOD?<br/><br/>Thanks,<br/>${myName}</div><span class="sug" onclick="navigator.clipboard?.writeText(document.querySelector('.dt-body')?.innerText||'')">📋 Copy email</span>`};
   }
-  if (m.includes('delegate') || m.includes('reassign')) {
-    return {type:'text', html:`Suggested tasks to delegate from your 9:<div class="data-tbl"><div class="dt-head"><svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/></svg>Delegation Candidates</div><div class="dt-row"><span>Railway.com access</span><span>→ Malav (IT)</span></div><div class="dt-row"><span>Amelia Parks access</span><span>→ Malav (IT)</span></div><div class="dt-row"><span>Avoma Access - T1 CS</span><span>→ Frances (CSM)</span></div></div>These 3 access tasks fit Malav's IT Support project perfectly.`};
+  if (m.includes('due date') || m.includes('suggest date') || m.includes('set date')) {
+    const noDate = WS.tasks.filter(t=>t.due==='No date').slice(0,5);
+    const days = ['Mon','Tue','Wed','Thu','Fri'];
+    const base = new Date(); base.setDate(base.getDate()+1);
+    const rows = noDate.length
+      ? noDate.map((t,i)=>{const d=new Date(base);d.setDate(base.getDate()+i);return `<div class="dt-row"><span>${t.name.slice(0,28)}</span><span style="color:var(--tl)">${d.toLocaleDateString('en-US',{month:'short',day:'numeric'})}</span></div>`;}).join('')
+      : '<div class="dt-row"><span>All tasks have due dates ✅</span></div>';
+    return {html:`Suggested due dates for undated tasks:<div class="data-tbl"><div class="dt-head"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/></svg>Suggested Dates</div>${rows}</div><span class="sug t" href="https://app.asana.com" onclick="window.open('https://app.asana.com','_blank')">Update in Asana →</span>`};
   }
-  if (m.includes('standup') || m.includes('stand up') || m.includes('daily update')) {
-    return {type:'text', html:`<strong>Standup draft</strong> for today, Mar 27:<div class="data-tbl"><div class="dt-head"><svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>Daily Standup — Sebastin</div><div class="dt-row" style="flex-direction:column;align-items:flex-start;gap:2px;"><span>✅ Done</span><span style="color:var(--tx-m);font-size:9px">Reviewed open tasks and project statuses</span></div><div class="dt-row" style="flex-direction:column;align-items:flex-start;gap:2px;"><span>🎯 Today</span><span style="color:var(--tx-m);font-size:9px">Clearing 3 overdue tasks, reviewing Integrations</span></div><div class="dt-row" style="flex-direction:column;align-items:flex-start;gap:2px;"><span>🚧 Blockers</span><span style="color:var(--tx-m);font-size:9px">Integrations (134 open), SE-Reporting (61 open)</span></div></div><span class="sug t" onclick="copyToClipboard()">📋 Copy to clipboard</span>`};
+  if (m.includes('summary') || m.includes('overview') || m.includes('briefing')) {
+    return {html:`<strong>Workspace overview</strong> — ${today}:<div class="data-tbl"><div class="dt-head"><svg viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>Your Workspace Stats</div><div class="dt-row"><span>Total tasks</span><span style="font-weight:700">${totalAll.toLocaleString()}</span></div><div class="dt-row"><span>Completed</span><span style="color:var(--gn)">${totalDone.toLocaleString()} (${pct}%)</span></div><div class="dt-row"><span>Open</span><span style="color:var(--or)">${totalOpen.toLocaleString()}</span></div><div class="dt-row"><span>Your open tasks</span><span style="color:${overdue.length?'var(--rd)':'var(--gn)'}">${WS.tasks.length}${overdue.length?' ('+overdue.length+' overdue)':''}</span></div><div class="dt-row"><span>At-risk projects</span><span style="color:var(--rd)">${critical.length}</span></div></div><span class="sug" onclick="sendQ('generate standup for today')">📢 Turn into standup</span><span class="sug t" onclick="setNavById('dashboard')">Dashboard →</span>`};
   }
-  if (m.includes('escalat') || m.includes('email') && m.includes('draft')) {
-    return {type:'text', html:`Draft escalation:<div class="data-tbl"><div class="dt-head"><svg viewBox="0 0 24 24"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>Escalation Email Draft</div></div><div style="font-size:10px;color:var(--tx-m);padding:7px;background:var(--bg);border-radius:6px;margin-top:6px;line-height:1.6;"><strong>Subject:</strong> Urgent Project Review Needed<br/><br/>Hi team,<br/>Three projects need immediate attention:<br/>• <strong>Integrations</strong> — 134 open tasks (14% done)<br/>• <strong>SE-Reporting</strong> — 61 open tasks (2% done)<br/>• <strong>Videos</strong> — 31 open tasks (18% done)<br/><br/>Can we align by EOD Friday?<br/>— Sebastin</div>`};
+  if (m.includes('my task') || m.includes('my work') || m.includes('assigned to me')) {
+    return {html:`<strong>${myName}'s tasks</strong> — ${WS.tasks.length} open:<div class="data-tbl"><div class="dt-head"><svg viewBox="0 0 24 24"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>My Open Tasks</div>${taskRows(WS.tasks,6)}</div><span class="sug t" onclick="setNavById('mytasks')">View all →</span>${overdue.length?`<span class="sug" onclick="sendQ('overdue tasks')">🔴 ${overdue.length} overdue</span>`:''}`};
   }
-  if (m.includes('due date') || m.includes('set date')) {
-    return {type:'text', html:`Suggested due dates for undated tasks:<div class="data-tbl"><div class="dt-head"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/></svg>Suggested Dates</div><div class="dt-row"><span>Railway.com access</span><span>Mar 31</span></div><div class="dt-row"><span>SSM capture time</span><span>Apr 1</span></div><div class="dt-row"><span>Email notifications</span><span>Apr 3</span></div><div class="dt-row"><span>Amelia Parks access</span><span>Mar 29</span></div></div>Update directly in <a href="https://app.asana.com" target="_blank" style="color:var(--tl)">Asana →</a>`};
-  }
-  if (m.includes('summary') || m.includes('overview')) {
-    return {type:'text', html:`<strong>Workspace summary</strong> — Mar 27, 2026:<div class="data-tbl"><div class="dt-head"><svg viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>Adit Workspace Stats</div><div class="dt-row"><span>Total tasks</span><span>3,290</span></div><div class="dt-row"><span>Completed</span><span style="color:var(--gn)">2,713 (82%)</span></div><div class="dt-row"><span>Open</span><span>577</span></div><div class="dt-row"><span>Critical projects</span><span style="color:var(--rd)">4</span></div><div class="dt-row"><span>Your open tasks</span><span style="color:var(--or)">9 (3 overdue)</span></div></div><span class="sug" onclick="sendQ('Generate standup')">📢 Turn into standup →</span>`};
+
+  /* ── Search tasks by keyword ── */
+  const matches = WS.tasks.filter(t => t.name.toLowerCase().includes(m) || (t.project||'').toLowerCase().includes(m));
+  if (matches.length > 0 && m.length > 3) {
+    return {html:`Found <strong>${matches.length} task${matches.length!==1?'s':''}</strong> matching "<em>${text}</em>":<div class="data-tbl"><div class="dt-head"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>Search Results</div>${taskRows(matches,5)}</div>${matches.length>5?`<span class="sug t" onclick="setNavById('mytasks')">See all ${matches.length} results →</span>`:''}`};
   }
 
   // DEFAULT
-  return {type:'text', html:`I searched your <strong>Adit workspace</strong> for "<em>${text}</em>".<div class="data-tbl"><div class="dt-head"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>What I can help with</div><div class="dt-row"><span>Your tasks</span><span>9 open, 3 overdue</span></div><div class="dt-row"><span>Projects</span><span>20+</span></div><div class="dt-row"><span>Critical</span><span style="color:var(--rd)">4 projects</span></div></div>Try: <em>"project status"</em>, <em>"team workload"</em>, or <em>"generate standup"</em>`};
+  return {html:`I searched your workspace for "<em>${text}</em>" — no exact match found.<div class="data-tbl"><div class="dt-head"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>Try asking about</div><div class="dt-row" onclick="sendQ('my overdue tasks')" style="cursor:pointer"><span>🔴 Overdue tasks</span><span style="color:var(--or)">${overdue.length}</span></div><div class="dt-row" onclick="sendQ('project status')" style="cursor:pointer"><span>📁 Project status</span><span style="color:var(--or)">${WS.projects.length} projects</span></div><div class="dt-row" onclick="sendQ('generate standup')" style="cursor:pointer"><span>📢 Standup</span><span style="color:var(--or)">Generate</span></div><div class="dt-row" onclick="sendQ('what should I prioritise today')" style="cursor:pointer"><span>⚡ My priorities</span><span style="color:var(--or)">Today</span></div></div>`};
 }
 
 /* ━━━━━ HANDLE INPUT (chat + task create) ━━━━━ */
@@ -2843,6 +2946,48 @@ function editTask() {
 function sendQ(q) {
   document.getElementById('ai-inp').value = q;
   handleInput();
+}
+
+/* ━━━━━ AI FOCUS MODE ━━━━━ */
+let aiFocused = false;
+function toggleAIFocus() {
+  aiFocused = !aiFocused;
+  document.querySelector('.layout').classList.toggle('ai-focus', aiFocused);
+  const icon = document.getElementById('ai-focus-icon');
+  if (icon) {
+    icon.innerHTML = aiFocused
+      ? '<path d="M8 3v3a2 2 0 01-2 2H3m18 0h-3a2 2 0 01-2-2V3m0 18v-3a2 2 0 012-2h3M3 16h3a2 2 0 012 2v3"/>'  /* collapse */
+      : '<path d="M8 3H5a2 2 0 00-2 2v3m18 0V5a2 2 0 00-2-2h-3m0 18h3a2 2 0 002-2v-3M3 16v3a2 2 0 002 2h3"/>'; /* expand */
+  }
+  if (aiFocused) {
+    addAIMsg(`🖥️ <strong>Focus Mode ON</strong> — full screen AI. Click the icon again to go back to the dashboard.`);
+  }
+  setTimeout(() => document.getElementById('ai-inp')?.focus(), 200);
+}
+
+/* ━━━━━ MORNING BRIEFING ━━━━━ */
+function addMorningBriefing() {
+  const hour = new Date().getHours();
+  const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
+  const name = WS.me.name?.split(' ')[0] || 'there';
+  const overdue = WS.tasks.filter(t => t.overdue).length;
+  const today = new Date().toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'});
+  const openTasks = WS.tasks.length;
+  const critProj = WS.projects.filter(p => p.status === 'critical' || p.status === 'delayed').length;
+
+  let briefHTML = `<strong>${greeting}, ${name} 👋</strong><br/><span style="color:var(--tx-s);font-size:10px">${today}</span>
+<div class="data-tbl" style="margin-top:8px">
+  <div class="dt-head"><svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>Your Briefing</div>
+  <div class="dt-row"><span>📋 Open tasks</span><span style="font-weight:700">${openTasks}</span></div>
+  ${overdue > 0 ? `<div class="dt-row"><span>🔴 Overdue</span><span style="color:var(--rd);font-weight:700">${overdue} tasks</span></div>` : '<div class="dt-row"><span>✅ Overdue</span><span style="color:var(--gn)">None!</span></div>'}
+  ${critProj > 0 ? `<div class="dt-row"><span>⚠️ At-risk projects</span><span style="color:var(--am);font-weight:700">${critProj}</span></div>` : ''}
+  <div class="dt-row"><span>📁 My projects</span><span>${WS.projects.length} active</span></div>
+</div>
+${overdue > 0 ? `<span class="sug t" onclick="sendQ('show my overdue tasks')">🔴 See overdue tasks →</span>` : ''}
+<span class="sug" onclick="sendQ('generate standup for today')">📢 Generate standup</span>
+<span class="sug" onclick="sendQ('what should I prioritise today')">⚡ What to prioritise?</span>`;
+
+  addAIMsg(briefHTML);
 }
 
 /* ━━━━━ MESSAGE HELPERS ━━━━━ */
@@ -4267,6 +4412,9 @@ async function fetchLiveData(token) {
     };
     /* Update chat avatar initials with real user */
     document.querySelectorAll('.msg-ic.user').forEach(el => el.textContent = WS.me.initials);
+    /* Update workspace label in AI panel header */
+    const wsLabel = document.getElementById('ap-workspace-label');
+    if (wsLabel) wsLabel.textContent = `Asana Intelligence · ${user.workspaces?.[0]?.name || 'Your workspace'}`;
 
     dlStep(2);
 
@@ -4378,7 +4526,13 @@ async function fetchLiveData(token) {
 
     /* ── Re-render all initialised views ── */
     refreshAllViews();
-    buildStandup(); /* Pre-build standup so it's instant when opened */
+    buildStandup();
+
+    /* ── Morning briefing in AI panel after first sync ── */
+    const msgs = document.getElementById('msgs');
+    if (msgs && msgs.children.length <= 1) {
+      setTimeout(() => addMorningBriefing(), 400);
+    }
 
     if (loader) loader.classList.add('hidden');
 
