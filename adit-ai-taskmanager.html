@@ -2254,7 +2254,7 @@ body.dark .profile-drop{background:#162230;border-color:#243446;}
               <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="var(--or)" stroke-width="2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
               Standup AI
             </div>
-            <div class="vp-sub">AI-generated standup for Sebastin · Friday, Mar 27, 2026</div>
+            <div class="vp-sub" id="standup-sub">AI-generated standup — loading your tasks…</div>
           </div>
           <button class="btn" onclick="regenerateStandup()">↻ Regenerate</button>
         </div>
@@ -2777,16 +2777,60 @@ function handleInput() {
   }
 }
 
-function confirmCreateTask() {
+async function confirmCreateTask() {
   const card = document.getElementById('task-preview-card');
-  if (!card) return;
+  if (!card || !pendingTask) return;
   const actions = card.querySelector('.tc-actions');
-  actions.innerHTML = `<div class="tc-created"><svg viewBox="0 0 24 24"><path d="M9 11l3 3L22 4"/></svg>Task created in Asana!</div>`;
-  // Visual confirmation then follow-up message
-  setTimeout(() => {
-    addAIMsg(`✅ Task <strong>"${pendingTask.name}"</strong> has been added to <strong>${pendingTask.project}</strong> in Asana, assigned to <strong>${pendingTask.assignee}</strong>, due <strong>${pendingTask.dueDate}</strong>.<span class="sug t" onclick="window.open('https://app.asana.com','_blank')">🔗 View in Asana →</span>`);
-    pendingTask = null;
-  }, 800);
+  actions.innerHTML = `<div class="tc-created" style="color:var(--tx-s);font-size:11px">Creating task…</div>`;
+
+  try {
+    const token = LIVE_TOKEN || JSON.parse(localStorage.getItem('adit_auth')||'{}').token;
+    if (!token || !LIVE_WS_GID) throw new Error('Not authenticated');
+
+    const body = {
+      data: {
+        name:      pendingTask.name,
+        workspace: LIVE_WS_GID,
+        assignee:  'me',
+      }
+    };
+    /* Parse due date string back to ISO if possible */
+    if (pendingTask.dueDate && pendingTask.dueDate !== 'No date') {
+      const d = new Date(pendingTask.dueDate);
+      if (!isNaN(d)) body.data.due_on = d.toISOString().split('T')[0];
+    }
+    /* Attach to first matching project if known */
+    if (WS.projects.length > 0) {
+      const matchProj = WS.projects.find(p =>
+        p.name.toLowerCase().includes((pendingTask.project||'').toLowerCase())
+      ) || WS.projects[0];
+      if (matchProj?.gid) body.data.projects = [matchProj.gid];
+    }
+
+    const resp = await fetch(`${ASANA_BASE}/tasks`, {
+      method:  'POST',
+      headers: { ...asanaHeaders(token), 'Content-Type': 'application/json' },
+      body:    JSON.stringify(body),
+    });
+
+    if (resp.status === 401) { handleAuthError(); return; }
+
+    const result = await resp.json();
+    const taskGid = result.data?.gid;
+    const taskUrl = taskGid ? `https://app.asana.com/0/${LIVE_WS_GID}/${taskGid}` : 'https://app.asana.com';
+
+    actions.innerHTML = `<div class="tc-created"><svg viewBox="0 0 24 24"><path d="M9 11l3 3L22 4"/></svg>Created in Asana!</div>`;
+    setTimeout(() => {
+      addAIMsg(`✅ Task <strong>"${pendingTask.name}"</strong> created in Asana${body.data.due_on ? ', due <strong>'+pendingTask.dueDate+'</strong>' : ''}.<span class="sug t" onclick="window.open('${taskUrl}','_blank')" style="cursor:pointer">🔗 View in Asana →</span>`);
+      pendingTask = null;
+      /* Refresh task list after short delay */
+      setTimeout(() => fetchLiveData(LIVE_TOKEN), 2000);
+    }, 600);
+
+  } catch(e) {
+    actions.innerHTML = `<div class="tc-created" style="color:var(--rd)">⚠ Failed to create. Check your connection.</div>`;
+    console.error('Task create error:', e);
+  }
 }
 
 function editTask() {
@@ -2900,7 +2944,7 @@ function setNav(el) {
     predictions: initPredictions,
     autoassign:  () => {},
     riskradar:   () => {},
-    standup:     () => {},
+    standup:     () => buildStandup(),
     reports:     initReportBuilder,
     dashbuilder: initDashboardBuilder,
   };
@@ -3045,7 +3089,110 @@ function copyStandup() {
 function regenerateStandup() {
   const btn = document.querySelector('#view-standup .btn');
   if (btn) { btn.textContent = '↻ Regenerating…'; btn.disabled = true; }
-  setTimeout(() => { if (btn) { btn.textContent = '↻ Regenerate'; btn.disabled = false; } }, 1500);
+  buildStandup();
+  setTimeout(() => { if (btn) { btn.textContent = '↻ Regenerate'; btn.disabled = false; } }, 800);
+}
+
+function buildStandup() {
+  const name = WS.me.name || 'You';
+  const today = new Date();
+  const dayName = today.toLocaleDateString('en-US',{weekday:'long'});
+  const dateStr = today.toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'});
+
+  /* Update header */
+  const sub = document.querySelector('#view-standup .vp-sub');
+  if (sub) sub.textContent = `AI-generated standup for ${name} · ${dayName}, ${dateStr}`;
+
+  /* Categorise tasks */
+  const todayStr = today.toISOString().split('T')[0];
+  const tomorrow = new Date(today); tomorrow.setDate(tomorrow.getDate()+1);
+  const tomorrowStr = tomorrow.toISOString().split('T')[0];
+
+  const overdue   = WS.tasks.filter(t => t.overdue);
+  const dueToday  = WS.tasks.filter(t => t.due === fmtDate(todayStr) || t.due === fmtDate(tomorrowStr));
+  const upcoming  = WS.tasks.filter(t => !t.overdue && !dueToday.includes(t)).slice(0, 4);
+  const doneTasks = (WS.recentDone || []).slice(0, 4);
+
+  function li(text, color) {
+    return `<div class="ss-item"><div class="ss-dot" style="background:${color}"></div>${text}</div>`;
+  }
+
+  /* Yesterday / Done */
+  let doneHTML = doneTasks.length
+    ? doneTasks.map(t => li(t.name, 'var(--gn)')).join('')
+    : li('No tasks completed in the last 2 days — check Asana for full history.', 'var(--tx-s)');
+
+  /* Today */
+  const todayItems = [...overdue.slice(0,3), ...dueToday.slice(0,3), ...upcoming.slice(0,2)];
+  let todayHTML = todayItems.length
+    ? todayItems.map(t => li(
+        `${t.name}${t.overdue ? ' <span style="color:var(--rd);font-weight:700">(overdue)</span>' : ''}`,
+        t.overdue ? 'var(--rd)' : 'var(--tl)'
+      )).join('')
+    : li('No open tasks found — you\'re all caught up! 🎉', 'var(--gn)');
+
+  /* Blockers */
+  const blockers = overdue.slice(0, 3);
+  const critProj = WS.projects.filter(p => p.status === 'critical' || p.status === 'delayed').slice(0, 2);
+  let blockHTML = '';
+  blockers.forEach(t => { blockHTML += li(`<strong>${t.name}</strong> — overdue since ${t.due}`, 'var(--rd)'); });
+  critProj.forEach(p => { blockHTML += li(`<strong>${p.name}</strong> — ${p.open} open tasks (${p.pct}% complete)`, 'var(--am)'); });
+  if (!blockHTML) blockHTML = li('No blockers identified — great momentum! 🚀', 'var(--gn)');
+
+  const content = document.getElementById('standup-content');
+  if (!content) return;
+
+  content.innerHTML = `
+    <div class="standup-card" style="grid-column:1/-1">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;padding-bottom:12px;border-bottom:1.5px solid var(--bd)">
+        <img src="https://adit.com/images/home-v3/adit-ai-colored-icon.webp" width="28" height="28" style="border-radius:8px" onerror="this.style.display='none'"/>
+        <div>
+          <div style="font-size:12px;font-weight:700;color:var(--nv)">adit ai Standup Summary</div>
+          <div style="font-size:10px;color:var(--tx-s)">Generated from your Asana tasks · ${dateStr}</div>
+        </div>
+        <div class="live-dot" style="margin-left:auto"></div>
+      </div>
+      <div class="standup-section">
+        <div class="ss-label" style="color:var(--gn)">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--gn)" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+          Yesterday — What I completed
+        </div>
+        ${doneHTML}
+      </div>
+      <div class="standup-section">
+        <div class="ss-label" style="color:var(--tl)">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--tl)" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          Today — What I'm working on
+        </div>
+        ${todayHTML}
+      </div>
+      <div class="standup-section">
+        <div class="ss-label" style="color:var(--rd)">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--rd)" stroke-width="2.5"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/></svg>
+          Blockers & Risks
+        </div>
+        ${blockHTML}
+      </div>
+      <div class="standup-actions">
+        <button class="sa-btn primary" onclick="copyStandup()">Copy to Clipboard</button>
+        <button class="sa-btn" onclick="sendQ('Write a standup email for today')">Email Draft</button>
+        <button class="sa-btn" onclick="sendQ('What should I prioritise today?')">Ask AI: Priorities</button>
+      </div>
+    </div>`;
+}
+
+function copyStandup() {
+  const name = WS.me.name || 'Me';
+  const dateStr = new Date().toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'});
+  const overdue = WS.tasks.filter(t=>t.overdue);
+  const done    = (WS.recentDone||[]).slice(0,3).map(t=>`  ✅ ${t.name}`).join('\n') || '  ✅ (check Asana for completed tasks)';
+  const today   = WS.tasks.slice(0,4).map(t=>`  🎯 ${t.name}${t.overdue?' (OVERDUE)':''}`).join('\n') || '  🎯 No open tasks';
+  const blocks  = overdue.slice(0,2).map(t=>`  🚧 ${t.name} — overdue since ${t.due}`).join('\n') || '  🚧 No blockers';
+  const text = `STANDUP — ${name}, ${dateStr}\n\nYESTERDAY:\n${done}\n\nTODAY:\n${today}\n\nBLOCKERS:\n${blocks}`;
+  navigator.clipboard?.writeText(text).then(() => {
+    const btn = document.querySelector('.sa-btn.primary');
+    if (btn) { btn.textContent='✓ Copied!'; setTimeout(()=>{ btn.textContent='Copy to Clipboard'; },2000); }
+  });
 }
 
 function applyAllAssignments() {
@@ -3882,11 +4029,15 @@ const ASANA_OAUTH_URL  = 'https://app.asana.com/-/oauth_authorize';
   // 1. Check if Asana just redirected back with a token in the hash
   const hash = window.location.hash;
   if (hash && hash.includes('token=')) {
-    const tokenMatch = hash.match(/token=([^&]+)/);
+    const tokenMatch   = hash.match(/token=([^&]+)/);
+    const refreshMatch = hash.match(/refresh=([^&]+)/);
     if (tokenMatch) {
-      const token = decodeURIComponent(tokenMatch[1]);
-      // Clear token from URL so it doesn't linger in browser history
+      const token        = decodeURIComponent(tokenMatch[1]);
+      const refreshToken = refreshMatch ? decodeURIComponent(refreshMatch[1]) : null;
+      // Clear tokens from URL so they don't linger in browser history
       history.replaceState(null, '', window.location.pathname);
+      // Store refresh token for later use
+      if (refreshToken) localStorage.setItem('adit_refresh', refreshToken);
       // Verify and log in with this token
       setLoginLoading(true, 'Signing you in…');
       document.getElementById('login-screen').classList.remove('hidden');
@@ -4037,8 +4188,44 @@ document.head.appendChild(shakeStyle);
 const ASANA_BASE = 'https://app.asana.com/api/1.0';
 const TODAY = new Date(); TODAY.setHours(0,0,0,0);
 
+/* Live session globals — set after OAuth login */
+let LIVE_WS_GID   = null;
+let LIVE_USER_GID = null;
+let LIVE_TOKEN    = null;
+
 function asanaHeaders(token) {
   return { 'Authorization': 'Bearer ' + token, 'Accept': 'application/json' };
+}
+
+/* ── Graceful 401 handler: try refresh first, then re-prompt login ── */
+async function handleAuthError() {
+  const refreshToken = localStorage.getItem('adit_refresh');
+  if (refreshToken) {
+    try {
+      const r = await fetch('/refresh?token=' + encodeURIComponent(refreshToken));
+      if (r.ok) {
+        const data = await r.json();
+        if (data.access_token) {
+          const sess = JSON.parse(localStorage.getItem('adit_auth') || '{}');
+          sess.token = data.access_token;
+          localStorage.setItem('adit_auth', JSON.stringify(sess));
+          if (data.refresh_token) localStorage.setItem('adit_refresh', data.refresh_token);
+          LIVE_TOKEN = data.access_token;
+          fetchLiveData(data.access_token);
+          return; /* Recovered silently */
+        }
+      }
+    } catch(e) { /* Fall through to logout */ }
+  }
+  /* Could not refresh — clear session and show login */
+  localStorage.removeItem('adit_auth');
+  localStorage.removeItem('adit_refresh');
+  sessionStorage.removeItem('adit_auth');
+  const appRoot = document.getElementById('app-root');
+  if (appRoot) { appRoot.style.display='none'; appRoot.classList.add('locked'); }
+  const ls = document.getElementById('login-screen');
+  if (ls) ls.classList.remove('hidden');
+  showLoginError('Your session expired. Please sign in again.');
 }
 
 function dlStep(n) {
@@ -4062,9 +4249,24 @@ async function fetchLiveData(token) {
 
     /* ── Step 1: get workspace GID ── */
     const meR = await fetch(`${ASANA_BASE}/users/me?opt_fields=gid,name,email,workspaces`, { headers: hdrs });
+    if (meR.status === 401) { handleAuthError(); return; }
     const meData = await meR.json();
     const user = meData.data;
     const wsGid = user.workspaces?.[0]?.gid || '7153196700226';
+
+    /* Store globally for task creation and standup */
+    LIVE_WS_GID   = wsGid;
+    LIVE_USER_GID = user.gid;
+    LIVE_TOKEN    = token;
+
+    /* Sync real user info into WS.me */
+    WS.me = {
+      name:     user.name  || 'User',
+      initials: (user.name||'U').split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase(),
+      email:    user.email || '',
+    };
+    /* Update chat avatar initials with real user */
+    document.querySelectorAll('.msg-ic.user').forEach(el => el.textContent = WS.me.initials);
 
     dlStep(2);
 
@@ -4075,6 +4277,15 @@ async function fetchLiveData(token) {
     );
     const taskData = await taskR.json();
     const rawTasks = taskData.data || [];
+
+    /* ── Step 2b: get recently completed tasks (last 2 days) for Standup AI ── */
+    const twoDaysAgo = new Date(Date.now() - 2*24*60*60*1000).toISOString();
+    const doneR = await fetch(
+      `${ASANA_BASE}/tasks?assignee=me&workspace=${wsGid}&completed_since=${twoDaysAgo}&opt_fields=gid,name,completed_at,projects&limit=25`,
+      { headers: hdrs }
+    );
+    const doneData = await doneR.json();
+    WS.recentDone = (doneData.data || []).filter(t => t.completed_at);
 
     dlStep(3);
 
@@ -4167,6 +4378,7 @@ async function fetchLiveData(token) {
 
     /* ── Re-render all initialised views ── */
     refreshAllViews();
+    buildStandup(); /* Pre-build standup so it's instant when opened */
 
     if (loader) loader.classList.add('hidden');
 
@@ -4233,7 +4445,9 @@ document.addEventListener('click', () => closeProfileDrop());
 /* ── Logout ── */
 function doLogout() {
   localStorage.removeItem('adit_auth');
+  localStorage.removeItem('adit_refresh');
   sessionStorage.removeItem('adit_auth');
+  LIVE_TOKEN = null; LIVE_WS_GID = null; LIVE_USER_GID = null;
   // Reset app state
   const appRoot = document.getElementById('app-root');
   appRoot.classList.add('locked');
