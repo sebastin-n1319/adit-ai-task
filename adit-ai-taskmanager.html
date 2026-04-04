@@ -1196,6 +1196,71 @@ body.dark #dm-btn .ico-moon{display:none;}
 /* legacy alias */
 .dm-toggle{display:none;}
 
+/* ━━━━━ COMPREHENSIVE DARK MODE TEXT FIX ━━━━━ */
+body.dark { color: #D6EAF8; }
+body.dark h1, body.dark h2, body.dark h3, body.dark h4 { color: #E8F4FF; }
+body.dark p, body.dark span, body.dark div { color: inherit; }
+body.dark .view-content { background: #0A1520; }
+body.dark .view-pane { background: #0A1520; }
+body.dark .card { color: #C8DCF0; }
+body.dark .ct { color: #E8F4FF !important; }
+body.dark .kpi-val { color: #E8F4FF !important; }
+body.dark .kpi-lbl { color: #5A7E99 !important; }
+body.dark .kpi-sub { color: #5A7E99 !important; }
+body.dark .kpi-ico svg { stroke: currentColor; }
+body.dark .tt-name { color: #D6EAF8 !important; }
+body.dark .tt-proj { color: #5A7E99 !important; }
+body.dark .tt-due { color: #8BAEC8 !important; }
+body.dark .tr .tn { color: #D6EAF8 !important; }
+body.dark .tr .td { color: #8BAEC8 !important; }
+body.dark .pn { color: #D6EAF8 !important; }
+body.dark .pp { color: #8BAEC8 !important; }
+body.dark .standup-card { background: #111E2C; border-color: #1E3044; }
+body.dark .ss-head { color: #E8F4FF; }
+body.dark .ss-item { color: #8BAEC8; border-color: #1E3044; }
+body.dark .vp-title { color: #E8F4FF !important; }
+body.dark .vp-sub { color: #5A7E99 !important; }
+body.dark .ap-ctx { background: rgba(0,0,0,.25); border-color: #1E3044; }
+body.dark .ctx-chip { background: #13202E; border-color: #1E3044; color: #6A8DA8; }
+body.dark .bbl { color: #C8DCF0 !important; }
+body.dark .bbl strong { color: #E8F4FF !important; }
+body.dark .ap-head { background: linear-gradient(135deg, #071523, #0A2035); }
+body.dark .pred-title { color: #D6EAF8 !important; }
+body.dark .pred-body { color: #8BAEC8 !important; }
+body.dark .risk-item { background: #111E2C; border-color: #1E3044; }
+body.dark .ri-title { color: #D6EAF8 !important; }
+body.dark .ri-body { color: #8BAEC8 !important; }
+body.dark .dt-row span { color: #C8DCF0; }
+body.dark .dt-row span:first-child { color: #8BAEC8; }
+body.dark .tab { color: #5A7E99; }
+body.dark .tab.on { color: #D6EAF8; background: #1E3044; }
+body.dark .tf { background: #13202E; border-color: #1E3044; color: #8BAEC8; }
+body.dark .tf.active { background: var(--or); border-color: var(--or); color: #fff; }
+body.dark .rpt-meta h3 { color: #E8F4FF; }
+body.dark .rpt-meta p { color: #8BAEC8; }
+body.dark .rpt-kpi-lbl { color: #5A7E99; }
+body.dark .rpt-kpi-val { color: #E8F4FF !important; }
+body.dark .rpt-tbl td { color: #C8DCF0; }
+body.dark .rpt-tbl th { color: #5A7E99; }
+body.dark .nav-item { color: #6A90A8 !important; }
+body.dark .nav-item.active { color: #F4891F !important; }
+body.dark .sb-suite { color: rgba(255,255,255,.25) !important; }
+body.dark .nav-section-label { color: rgba(255,255,255,.25) !important; }
+body.dark .topbar-chip { color: #8BAEC8 !important; }
+body.dark .sa-section { color: #D6EAF8; }
+body.dark .sa-label { color: #5A7E99; }
+body.dark .ai-fv-bubble { color: #D6EAF8; }
+body.dark .ai-fv-bubble strong { color: #E8F4FF; }
+body.dark .ai-result-name { color: #D6EAF8 !important; }
+body.dark .notif-head { color: #E8F4FF; border-color: #1E3044; }
+body.dark .notif-txt { color: #8BAEC8; }
+body.dark .notif-txt strong { color: #D6EAF8; }
+body.dark .notif-item:hover { background: #1E3044; }
+body.dark .pd-name { color: #E8F4FF; }
+body.dark .pd-email { color: #5A7E99; }
+body.dark .pd-item { color: #8BAEC8; }
+body.dark .pd-item:hover { background: #1E3044; color: #D6EAF8; }
+
 /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
    COLLAPSIBLE SIDEBAR
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
@@ -2593,14 +2658,14 @@ body.dark .profile-drop{background:#162230;border-color:#243446;}
             <div class="ai-fv-msgs" id="ai-fv-msgs"></div>
             <!-- Quick chips -->
             <div class="ai-fv-chips" id="ai-fv-chips">
-              <button class="ai-fv-chip" onclick="fvSendQ('Generate my standup for today')">📢 Standup</button>
-              <button class="ai-fv-chip" onclick="fvSendQ('Show my overdue tasks')">🔴 Overdue</button>
-              <button class="ai-fv-chip" onclick="fvSendQ('Give me a workspace summary')">📊 Summary</button>
-              <button class="ai-fv-chip" onclick="fvSendQ('What should I prioritise today?')">⚡ Priorities</button>
-              <button class="ai-fv-chip" onclick="fvSendQ('Which projects are at risk?')">⚠️ Risks</button>
-              <button class="ai-fv-chip" onclick="fvSendQ('Give me a weekly review of my work')">📅 Weekly Review</button>
-              <button class="ai-fv-chip" onclick="fvSendQ('Draft a project status update')">✏️ Status Update</button>
-              <button class="ai-fv-chip" onclick="fvSendQ('Analyse my workload')">👤 Workload</button>
+              <button class="ai-fv-chip" onclick="fvSendQ('Generate my standup for today')">Standup</button>
+              <button class="ai-fv-chip" onclick="fvSendQ('Show my overdue tasks')">Overdue</button>
+              <button class="ai-fv-chip" onclick="fvSendQ('Give me a workspace summary')">Summary</button>
+              <button class="ai-fv-chip" onclick="fvSendQ('What should I prioritise today?')">Priorities</button>
+              <button class="ai-fv-chip" onclick="fvSendQ('Which projects are at risk?')">Risks</button>
+              <button class="ai-fv-chip" onclick="fvSendQ('Give me a weekly review of my work')">Weekly Review</button>
+              <button class="ai-fv-chip" onclick="fvSendQ('Draft a project status update')">Status Update</button>
+              <button class="ai-fv-chip" onclick="fvSendQ('Analyse my workload')">Workload</button>
             </div>
           </div>
         </div>
@@ -3689,6 +3754,10 @@ function filterProjects(filter) {
   if (btn) btn.classList.add('active');
   const statusColors = { 'on-track':'var(--gn)', risk:'#D97706', critical:'var(--rd)', delayed:'var(--or)' };
   let projs = filter === 'all' ? WS.projects : WS.projects.filter(p => p.status === filter);
+  if (projs.length === 0) {
+    document.getElementById('proj-cards-grid').innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:60px 20px;color:var(--tx-s)"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="margin:0 auto 12px;opacity:.4"><path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/></svg><br/>No projects match this filter</div>';
+    return;
+  }
   document.getElementById('proj-cards-grid').innerHTML = projs.map((p,i) => `
     <div class="proj-card" style="animation-delay:${i*0.04}s" onclick="sendQ('Status of ${p.name}')">
       <div class="pc-head">
@@ -3713,6 +3782,10 @@ function initProjects() { filterProjects('all'); }
    TIMELINE VIEW INIT
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
 function initTimeline() {
+  if (!WS.projects || WS.projects.length === 0) {
+    document.getElementById('timeline-rows').innerHTML = '<div style="text-align:center;padding:60px 20px;color:var(--tx-s);grid-column:1/-1"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="margin:0 auto 12px;opacity:.4"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg><br/>No projects to display on timeline</div>';
+    return;
+  }
   const colors = ['#F4891F','#002D42','#0FB77A','#7C3AED','#EF4444','#3B82F6','#F59E0B','#10B981','#8B5CF6','#EC4899','#06B6D4','#84CC16'];
   // Each project gets a bar. pct determines width. We map Jan-Apr across 4 columns.
   // Bar start = (1 - pct/100) * 100% into the track (projects started earlier = further left)
@@ -5045,10 +5118,11 @@ async function fetchLiveData(token) {
         return { gid:p.gid, name:p.name, total, done, open, pct, status };
       });
 
-    /* ── Recompute KPI totals ── */
-    const totalTasks = rawProjs.reduce((s,p) => s + (p.task_counts?.num_tasks||0), 0);
-    const totalDone  = rawProjs.reduce((s,p) => s + (p.task_counts?.num_completed_tasks||0), 0);
-    const totalOpen  = rawProjs.reduce((s,p) => s + (p.task_counts?.num_incomplete_tasks||0), 0);
+    /* ── Recompute KPI totals from ALL workspace projects ── */
+    const allProjs = projData.data || [];
+    const totalTasks = allProjs.reduce((s,p) => s + (p.task_counts?.num_tasks||0), 0);
+    const totalDone  = allProjs.reduce((s,p) => s + (p.task_counts?.num_completed_tasks||0), 0);
+    const totalOpen  = allProjs.reduce((s,p) => s + (p.task_counts?.num_incomplete_tasks||0), 0);
     WS.kpis = { total: totalTasks, done: totalDone, open: totalOpen, mine: WS.tasks.length };
 
     /* ── Update sidebar badge ── */
