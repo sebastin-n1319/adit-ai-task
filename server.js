@@ -2,6 +2,8 @@ const express = require('express');
 const path    = require('path');
 const app     = express();
 
+app.use(express.json({ limit: '2mb' }));
+
 const CLIENT_ID     = process.env.ASANA_CLIENT_ID     || '1213835252509979';
 const CLIENT_SECRET = process.env.ASANA_CLIENT_SECRET || '';
 const BASE_URL      = process.env.BASE_URL             || 'https://adit-taskai.up.railway.app';
@@ -88,6 +90,62 @@ app.get('/refresh', async (req, res) => {
     }
   } catch(e) {
     res.status(500).json({ error: 'server_error' });
+  }
+});
+
+/* ── AI Ask endpoint (Claude API) ── */
+app.post('/api/ask', async (req, res) => {
+  const { question, context } = req.body || {};
+  if (!question) return res.status(400).json({ error: 'missing_question' });
+
+  const apiKey = process.env.ANTHROPIC_API_KEY;
+  if (!apiKey) {
+    return res.json({ answer: null, fallback: true, reason: 'no_api_key' });
+  }
+
+  try {
+    // Build rich context string
+    const tasks  = (context?.tasks  || []).slice(0, 60);
+    const projs  = (context?.projects || []).slice(0, 30);
+    const me     = context?.me || {};
+    const kpis   = context?.kpis || {};
+
+    const ctxText = [
+      `User: ${me.name || 'unknown'} (${me.email || ''})`,
+      `Workspace KPIs: ${JSON.stringify(kpis)}`,
+      `Projects (${projs.length}): ${projs.map(p => `${p.name} [${p.status||'active'}, ${p.pct||0}% done]`).join('; ')}`,
+      `My Tasks (${tasks.length}): ${tasks.map(t => `"${t.name}" due:${t.due||t.due_on||'none'} overdue:${t.overdue||false} priority:${t.priority||'normal'} project:${t.project||''}`).join('; ')}`,
+    ].join('\n');
+
+    const body = JSON.stringify({
+      model: 'claude-haiku-4-5-20251001',
+      max_tokens: 1024,
+      system: `You are Adit AI, an intelligent work assistant for Adit — a dental software company. You have access to the user's Asana workspace data. Be concise, helpful, and professional. Format your answers in clean HTML: use <strong> for emphasis, <br> for line breaks, <ul>/<li> for lists. Never use markdown syntax like ** or ##. Keep responses focused and under 300 words unless a detailed breakdown is explicitly requested.`,
+      messages: [{
+        role: 'user',
+        content: `Workspace context:\n${ctxText}\n\nUser question: ${question}`
+      }]
+    });
+
+    const r = await fetch('https://api.anthropic.com/v1/messages', {
+      method:  'POST',
+      headers: {
+        'x-api-key':         apiKey,
+        'anthropic-version': '2023-06-01',
+        'content-type':      'application/json',
+      },
+      body,
+    });
+
+    const data = await r.json();
+    if (data.content?.[0]?.text) {
+      return res.json({ answer: data.content[0].text });
+    }
+    console.error('Claude API error:', JSON.stringify(data));
+    return res.json({ answer: null, fallback: true });
+  } catch (e) {
+    console.error('/api/ask error:', e.message);
+    return res.json({ answer: null, fallback: true });
   }
 });
 

@@ -1070,8 +1070,21 @@ body.dark .rpt-export-bar{background:#0F1923;border-color:#1D2E40;}
 body.dark .db-lib-item{background:#1D2E40;border-color:#243446;}
 body.dark .db-canvas{background:#162230;border-color:#243446;}
 body.dark .task-detail{background:#162230;border-color:#243446;}
+body.dark .td-head{background:#0F1923;border-color:#243446;}
+body.dark .td-title{color:#E8F4FF;}
+body.dark .td-close{color:#5A7E99;background:#1D2E40;border-color:#2A3E55;}
+body.dark .td-close:hover{background:rgba(244,137,31,.15);color:var(--or);}
+body.dark .td-body{background:#162230;}
 body.dark .td-meta{background:#1D2E40;border-color:#243446;}
-body.dark .td-notes{background:#1D2E40;border-color:#243446;}
+body.dark .td-meta-lbl{color:#4A6880;}
+body.dark .td-meta-val{color:#C8DCF0;}
+body.dark .td-sec-lbl{color:#4A6880;}
+body.dark .td-notes{background:#1D2E40;border-color:#243446;color:#8FAEC5;}
+body.dark .td-ai-tip{background:rgba(0,45,66,.4);border-color:#1E3044;}
+body.dark .td-ai-tip-txt{color:#8BAEC8;}
+body.dark .td-ai-tip-txt strong{color:#E8F4FF;}
+body.dark .td-actions{background:#0F1923;border-color:#243446;}
+body.dark #td-overlay{background:rgba(0,0,0,.6);}
 body.dark .cmd-box{background:#162230;border-color:#2A3E55;}
 body.dark .cmd-item:hover,body.dark .cmd-item.sel{background:rgba(244,137,31,.12);}
 
@@ -1099,6 +1112,10 @@ body.dark .pc-stat{color:#4A6880;}
 body.dark .pc-stat strong{color:#C8DCF0;}
 body.dark .pc-bar-wrap{background:#243446;}
 body.dark .pc-pct{color:#8FAEC5;}
+body.dark .badge-on-track{background:rgba(15,183,122,.15);color:#4ADE80;}
+body.dark .badge-risk{background:rgba(245,158,11,.12);color:#FBB124;}
+body.dark .badge-critical{background:rgba(239,68,68,.12);color:#F87171;}
+body.dark .badge-delayed{background:rgba(244,137,31,.12);color:var(--or);}
 
 /* ── Dark mode: Timeline view ── */
 body.dark .timeline-wrap{background:#162230;border-color:#243446;}
@@ -3018,7 +3035,7 @@ body.dark .profile-drop{background:#162230;border-color:#243446;}
   <div class="td-actions">
     <button class="td-act-btn" style="background:var(--or);color:#fff" onclick="tdComplete()">✓ Mark Complete</button>
     <button class="td-act-btn" style="background:var(--bg2);color:var(--nv);border:1.5px solid var(--bd)" onclick="tdAsk()">🤖 Ask AI</button>
-    <a href="https://app.asana.com" target="_blank" style="flex:1;text-decoration:none">
+    <a id="td-asana-link" href="https://app.asana.com" target="_blank" style="flex:1;text-decoration:none">
       <button class="td-act-btn" style="width:100%;background:var(--nv-l);color:var(--nv)">↗ Open in Asana</button>
     </a>
   </div>
@@ -3503,9 +3520,9 @@ async function _fvProcessInput(text) {
     const searchQuery = keywords.join(' ') || text;
 
     const wsResults = await searchAsanaWorkspace(searchQuery);
-    fvTypingEl?.remove(); fvTypingEl = null;
 
     if (wsResults && wsResults.length > 0) {
+      fvTypingEl?.remove(); fvTypingEl = null;
       const rows = wsResults.slice(0,10).map(t => {
         const proj = t.projects?.[0]?.name || '';
         const due = t.due_on ? new Date(t.due_on).toLocaleDateString('en-US',{month:'short',day:'numeric'}) : '';
@@ -3522,16 +3539,40 @@ async function _fvProcessInput(text) {
     }
 
     if (wsResults !== null) {
+      fvTypingEl?.remove(); fvTypingEl = null;
       fvAddAIMsg(`No open tasks found matching "<em>${searchQuery}</em>" across your Asana workspace. The task may be completed, deleted, or use different keywords.<br/><br/><span class="fv-sug" onclick="window.open('https://app.asana.com/search?q=${encodeURIComponent(searchQuery)}','_blank')">🔍 Search in Asana →</span>`);
       return;
     }
   }
 
-  setTimeout(() => {
+  /* ── Try Claude API for intelligent response ── */
+  try {
+    const r = await fetch('/api/ask', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        question: text,
+        context: {
+          tasks:      WS.tasks,
+          projects:   WS.projects,
+          me:         WS.me,
+          kpis:       WS.kpis,
+          recentDone: WS.recentDone,
+        }
+      })
+    });
+    const data = await r.json();
     fvTypingEl?.remove(); fvTypingEl = null;
-    const resp = getResponse(text);
-    fvAddAIMsg(resp.html);
-  }, 500 + Math.random()*300);
+    if (data.answer) {
+      fvAddAIMsg(data.answer);
+      return;
+    }
+  } catch(e) { /* fall through to local engine */ }
+
+  /* ── Local fallback engine (used when Claude API key not configured) ── */
+  fvTypingEl?.remove(); fvTypingEl = null;
+  const resp = getResponse(text);
+  fvAddAIMsg(resp.html);
 }
 
 async function fvConfirmCreate(task) {
@@ -3732,7 +3773,7 @@ function renderTaskRows() {
   const pc = priMap;
   document.getElementById('my-tasks-rows').innerHTML = tasks.map(t => `
     <div class="tt-row" onclick="showTaskDetail('${t.id}')">
-      <div class="tt-check${t.overdue ? ' ov' : ''}" onclick="event.stopPropagation()"></div>
+      <div class="tt-check${t.overdue ? ' ov' : ''}" title="Mark complete" onclick="event.stopPropagation();quickCompleteTask('${t.id}',this)"></div>
       <div class="tt-name" title="${t.name}">${t.name}</div>
       <div class="tt-proj">${t.project}</div>
       <div class="tt-due${t.overdue ? ' ov' : ''}">${t.due}</div>
@@ -3743,7 +3784,26 @@ function renderTaskRows() {
     </div>`).join('') || '<div style="padding:24px;text-align:center;color:var(--tx-s);font-size:11px">No tasks match this filter</div>';
 }
 
-function initMyTasks() { renderTaskRows(); }
+function initMyTasks() {
+  renderTaskRows();
+  // Update filter counts dynamically
+  const overdue = WS.tasks.filter(t => t.overdue).length;
+  const high    = WS.tasks.filter(t => t.priority === 'High' || t.priority === 'Urgent').length;
+  const access  = WS.tasks.filter(t => t.tags.includes('Access')).length;
+  const bugs    = WS.tasks.filter(t => t.tags.includes('Bug') || t.tags.includes('Feature')).length;
+  const bar = document.getElementById('task-filter-bar');
+  if (bar) {
+    const tfs = bar.querySelectorAll('.tf');
+    if (tfs[0]) tfs[0].textContent = `All (${WS.tasks.length})`;
+    if (tfs[1]) tfs[1].textContent = `Overdue (${overdue})`;
+    if (tfs[2]) tfs[2].textContent = `High Priority (${high})`;
+    if (tfs[3]) tfs[3].textContent = `Access Requests (${access})`;
+    if (tfs[4]) tfs[4].textContent = `Bugs & Features (${bugs})`;
+  }
+  // Update task view subtitle
+  const sub = document.querySelector('#view-mytasks .vp-sub');
+  if (sub) sub.textContent = `${WS.tasks.length} open task${WS.tasks.length!==1?'s':''} assigned to you across all projects`;
+}
 
 /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
    PROJECTS VIEW INIT
@@ -3752,14 +3812,18 @@ function filterProjects(filter) {
   document.querySelectorAll('#view-projects .tf').forEach(b => b.classList.remove('active'));
   const btn = document.getElementById('pf-' + filter);
   if (btn) btn.classList.add('active');
-  const statusColors = { 'on-track':'var(--gn)', risk:'#D97706', critical:'var(--rd)', delayed:'var(--or)' };
-  let projs = filter === 'all' ? WS.projects : WS.projects.filter(p => p.status === filter);
+  const statusColors = { 'on-track':'var(--gn)', 'risk':'#D97706', 'critical':'var(--rd)', 'delayed':'var(--or)' };
+  let projs = filter === 'all' ? WS.projects : WS.projects.filter(p => p.status === filter || (filter === 'risk' && (p.status === 'risk' || p.status === 'delayed')));
+  if (projs.length === 0 && WS.projects.length === 0) {
+    document.getElementById('proj-cards-grid').innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:60px 20px;color:var(--tx-s)"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="margin:0 auto 14px;display:block;opacity:.3"><path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/></svg><div style="font-size:12px;font-weight:600;margin-bottom:4px">Syncing projects…</div><div style="font-size:11px">Your Asana projects will appear here once loaded</div></div>';
+    return;
+  }
   if (projs.length === 0) {
-    document.getElementById('proj-cards-grid').innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:60px 20px;color:var(--tx-s)"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="margin:0 auto 12px;opacity:.4"><path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/></svg><br/>No projects match this filter</div>';
+    document.getElementById('proj-cards-grid').innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:60px 20px;color:var(--tx-s)"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="margin:0 auto 12px;display:block;opacity:.3"><path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/></svg><div style="font-size:12px;font-weight:600;margin-bottom:4px">No projects match this filter</div></div>';
     return;
   }
   document.getElementById('proj-cards-grid').innerHTML = projs.map((p,i) => `
-    <div class="proj-card" style="animation-delay:${i*0.04}s" onclick="sendQ('Status of ${p.name}')">
+    <div class="proj-card" style="animation-delay:${i*0.04}s">
       <div class="pc-head">
         <div class="pc-name">${p.name}</div>
         <div class="pc-badge badge-${p.status}">${p.status.replace('-',' ')}</div>
@@ -3772,18 +3836,77 @@ function filterProjects(filter) {
       <div class="pc-bar-wrap">
         <div class="pc-bar" style="width:${p.pct}%;background:${statusColors[p.status]||'var(--tl)'}"></div>
       </div>
-      <div class="pc-pct">${p.pct}% complete</div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-top:5px">
+        <div class="pc-pct">${p.pct}% complete</div>
+        <div style="display:flex;gap:4px">
+          <span style="font-size:9px;color:var(--tx-s);cursor:pointer;padding:2px 6px;border:1px solid var(--bd);border-radius:5px;transition:.14s" onclick="event.stopPropagation();sendQ('Status of ${p.name.replace(/'/g,"\\'")}');setNavById('aditai')" onmouseover="this.style.borderColor='var(--or)';this.style.color='var(--or)'" onmouseout="this.style.borderColor='var(--bd)';this.style.color='var(--tx-s)'">Ask AI</span>
+          ${p.gid ? `<a href="https://app.asana.com/0/${p.gid}" target="_blank" style="font-size:9px;color:var(--tx-s);text-decoration:none;padding:2px 6px;border:1px solid var(--bd);border-radius:5px;transition:.14s" onmouseover="this.style.borderColor='var(--nv)';this.style.color='var(--nv)'" onmouseout="this.style.borderColor='var(--bd)';this.style.color='var(--tx-s)'">↗ Asana</a>` : ''}
+        </div>
+      </div>
     </div>`).join('');
 }
 
 function initProjects() { filterProjects('all'); }
 
 /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   TOPBAR CHIPS — LIVE DATA
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+function updateTopbarChips() {
+  const strip = document.querySelector('.strip');
+  if (!strip) return;
+  const overdueCnt = WS.tasks.filter(t => t.overdue).length;
+  const critProjs = WS.projects.filter(p => p.status === 'critical');
+  const riskProjs = WS.projects.filter(p => p.status === 'risk' || p.status === 'delayed');
+  const bestProj = WS.projects.filter(p => p.pct >= 95)[0];
+
+  const chips = [];
+  if (overdueCnt > 0) {
+    chips.push(`<div class="chip c-r" onclick="setNavById('mytasks');setTimeout(()=>filterTasks('overdue',document.querySelector('#view-mytasks .tf:nth-child(2)')),100)" title="${overdueCnt} overdue tasks">🔴 ${overdueCnt} Overdue</div>`);
+  }
+  critProjs.slice(0,2).forEach(p => {
+    chips.push(`<div class="chip c-r" onclick="setNavById('projects')" title="${p.name}: ${p.pct}% complete, ${p.open} open tasks">⚠️ ${p.name} ${p.pct}%</div>`);
+  });
+  riskProjs.slice(0,1).forEach(p => {
+    chips.push(`<div class="chip c-o" onclick="setNavById('projects')" title="${p.name}: ${p.pct}% complete">📉 ${p.name} ${p.pct}%</div>`);
+  });
+  if (bestProj) {
+    chips.push(`<div class="chip c-g" onclick="setNavById('projects')" title="${bestProj.name}: ${bestProj.pct}% complete">✅ ${bestProj.name} ${bestProj.pct}% 🎉</div>`);
+  }
+  if (chips.length === 0) {
+    chips.push(`<div class="chip c-g">✅ All on track — ${WS.projects.length} projects</div>`);
+  }
+  strip.innerHTML = chips.join('');
+}
+
+/* Update the hardcoded dashboard Live Projects with real WS.projects data */
+function updateDashboardProjects() {
+  const pl = document.querySelector('.pl');
+  if (!pl || !WS.projects.length) return;
+  const statusLabel = { 'on-track':'● On Track', 'risk':'⚠ At Risk', 'critical':'🔴 Critical', 'delayed':'Delayed' };
+  const statusClass = { 'on-track':'b-on', 'risk':'b-rk', 'critical':'b-dl', 'delayed':'b-dl' };
+  const barColor = { 'on-track':'linear-gradient(90deg,var(--gn),#34D399)', 'risk':'linear-gradient(90deg,var(--am),#FBBF24)', 'critical':'linear-gradient(90deg,var(--rd),#F87171)', 'delayed':'linear-gradient(90deg,var(--or),#FB923C)' };
+  pl.innerHTML = WS.projects.slice(0,8).map(p => `
+    <div class="pi">
+      <div class="ph">
+        <span class="pn">${p.name}</span>
+        <span class="pb ${statusClass[p.status]||'b-on'}">${statusLabel[p.status]||'On Track'}</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:6px">
+        <div class="pt" style="flex:1"><div class="pf" style="--w:${p.pct}%;width:${p.pct}%;background:${barColor[p.status]||barColor['on-track']}"></div></div>
+        <span class="pp">${p.pct}%</span>
+      </div>
+    </div>`).join('');
+  // Update projects subtitle
+  const sub = document.querySelector('#view-projects .vp-sub');
+  if (sub) sub.textContent = `${WS.projects.length} projects · ${WS.kpis?.open||0} open tasks across your Adit workspace`;
+}
+
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
    TIMELINE VIEW INIT
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
 function initTimeline() {
   if (!WS.projects || WS.projects.length === 0) {
-    document.getElementById('timeline-rows').innerHTML = '<div style="text-align:center;padding:60px 20px;color:var(--tx-s);grid-column:1/-1"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="margin:0 auto 12px;opacity:.4"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg><br/>No projects to display on timeline</div>';
+    document.getElementById('timeline-rows').innerHTML = '<div style="text-align:center;padding:60px 20px;color:var(--tx-s)"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="margin:0 auto 14px;display:block;opacity:.3"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg><div style="font-size:12px;font-weight:600;margin-bottom:4px">Syncing timeline…</div><div style="font-size:11px">Project timelines will appear once your Asana data loads</div></div>';
     return;
   }
   const colors = ['#F4891F','#002D42','#0FB77A','#7C3AED','#EF4444','#3B82F6','#F59E0B','#10B981','#8B5CF6','#EC4899','#06B6D4','#84CC16'];
@@ -4553,6 +4676,10 @@ function showTaskDetail(tid, ev) {
       <div class="td-ai-tip-txt"><strong>adit ai:</strong> ${TASK_AI_TIPS[tid] || 'No specific insight for this task.'}</div>
     </div>`;
 
+  // Set real Asana task URL
+  const asanaLink = document.getElementById('td-asana-link');
+  if (asanaLink && task.gid) asanaLink.href = `https://app.asana.com/0/0/${task.gid}`;
+
   document.getElementById('td-overlay').classList.add('open');
   document.getElementById('task-detail').classList.add('open');
   document.getElementById('task-detail').dataset.tid = tid;
@@ -4563,15 +4690,48 @@ function closeTaskDetail() {
   document.getElementById('task-detail').classList.remove('open');
 }
 
-function tdComplete() {
+async function quickCompleteTask(tid, checkEl) {
+  checkEl.classList.add('done');
+  const row = checkEl.closest('.tt-row');
+  if (row) { row.style.opacity = '.4'; row.style.pointerEvents = 'none'; }
+  const task = WS.tasks.find(t => t.id === tid);
+  if (task?.gid) await completeTaskInAsana(task.gid);
+  setTimeout(() => {
+    WS.tasks = WS.tasks.filter(t => t.id !== tid);
+    renderTaskRows();
+  }, 600);
+}
+
+async function completeTaskInAsana(gid) {
+  const token = LIVE_TOKEN || JSON.parse(localStorage.getItem('adit_auth')||'{}').token;
+  if (!token || !gid) return false;
+  try {
+    const r = await fetch(`${ASANA_BASE}/tasks/${gid}`, {
+      method: 'PUT',
+      headers: { ...asanaHeaders(token), 'Content-Type': 'application/json' },
+      body: JSON.stringify({ data: { completed: true } })
+    });
+    return r.ok;
+  } catch(e) { return false; }
+}
+
+async function tdComplete() {
   const tid = document.getElementById('task-detail').dataset.tid;
-  const row = document.querySelector(`[data-tid="${tid}"]`);
-  if (row) {
-    const tc = row.querySelector('.tc');
-    if (tc) checkIt(tc);
-    row.style.opacity = '.4';
+  const task = WS.tasks.find(t => t.id === tid);
+  const btn = document.querySelector('#task-detail .td-act-btn');
+  if (btn) { btn.textContent = 'Completing…'; btn.disabled = true; }
+
+  const ok = task?.gid ? await completeTaskInAsana(task.gid) : false;
+
+  // Remove from local WS.tasks
+  if (task) {
+    WS.tasks = WS.tasks.filter(t => t.id !== tid);
+    renderTaskRows();
   }
   closeTaskDetail();
+  if (ok) {
+    fvAddAIMsg?.(`✅ <strong>"${task?.name}"</strong> marked complete in Asana!`);
+  }
 }
 
 function tdAsk() {
@@ -5062,11 +5222,13 @@ async function fetchLiveData(token) {
       { headers: hdrs }
     );
     const projData = await projR.json();
-    let rawProjs = (projData.data || []).filter(p => (p.task_counts?.num_tasks || 0) > 0);
+    // Keep ALL projects — don't pre-filter by task_counts (field may be missing for some project types)
+    let allRawProjs = (projData.data || []).filter(p => p.gid && p.name);
 
-    // Filter to only projects the user has tasks in; fall back to all if none match
+    // Prefer projects the user has tasks in; fall back to ALL workspace projects
+    let rawProjs = allRawProjs;
     if (myProjGids.size > 0) {
-      const filtered = rawProjs.filter(p => myProjGids.has(p.gid));
+      const filtered = allRawProjs.filter(p => myProjGids.has(p.gid));
       if (filtered.length > 0) rawProjs = filtered;
     }
 
@@ -5074,14 +5236,13 @@ async function fetchLiveData(token) {
 
     /* ── Build normalised WS.tasks ── */
     const projNameMap = {};
-    rawProjs.forEach(p => { projNameMap[p.gid] = p.name; });
+    allRawProjs.forEach(p => { projNameMap[p.gid] = p.name; });
 
     WS.tasks = rawTasks.map(t => {
       const due = t.due_on || null;
       const isOverdue = due ? new Date(due) < TODAY : false;
-      const proj = t.projects?.[0] ? (projNameMap[t.projects[0].gid] || t.projects[0].name || 'Asana') : 'Asana';
+      const proj = t.projects?.[0] ? (projNameMap[t.projects[0].gid] || t.projects[0].name || 'Adit') : 'Adit';
       const tagNames = (t.tags || []).map(tg => tg.name).filter(Boolean);
-      // Infer priority from overdue / urgency keywords
       const lower = t.name.toLowerCase();
       let priority = 'Normal';
       if (isOverdue) priority = 'High';
@@ -5101,21 +5262,20 @@ async function fetchLiveData(token) {
       };
     });
 
-    /* ── Build normalised WS.projects ── */
+    /* ── Build normalised WS.projects — use rawProjs (user-filtered or all) ── */
     WS.projects = rawProjs
-      .filter(p => p.task_counts?.num_tasks > 0)
       .sort((a,b) => (b.task_counts?.num_incomplete_tasks||0) - (a.task_counts?.num_incomplete_tasks||0))
       .slice(0, 20)
       .map(p => {
-        const total = p.task_counts.num_tasks || 0;
-        const done  = p.task_counts.num_completed_tasks || 0;
-        const open  = p.task_counts.num_incomplete_tasks || 0;
+        const total = p.task_counts?.num_tasks || 0;
+        const done  = p.task_counts?.num_completed_tasks || 0;
+        const open  = p.task_counts?.num_incomplete_tasks || 0;
         const pct   = total > 0 ? Math.round((done / total) * 100) : 0;
         let status = 'on-track';
         if (pct < 30)       status = 'critical';
         else if (pct < 60)  status = 'delayed';
         else if (pct < 80)  status = 'risk';
-        return { gid:p.gid, name:p.name, total, done, open, pct, status };
+        return { gid: p.gid, name: p.name, color: p.color, total, done, open, pct, status };
       });
 
     /* ── Recompute KPI totals from ALL workspace projects ── */
@@ -5134,13 +5294,17 @@ async function fetchLiveData(token) {
     const kpiTargets = [totalTasks, totalDone, totalOpen, WS.tasks.length];
     kpiVals.forEach((el,i) => { if (kpiTargets[i] !== undefined) countUp(el, kpiTargets[i], 900); });
 
-    /* ── Update overdue chip in topbar ── */
-    const overdueCnt = WS.tasks.filter(t=>t.overdue).length;
-    const chip = document.querySelector('.chip.c-r');
-    if (chip && overdueCnt > 0) chip.textContent = `🔴 ${overdueCnt} Overdue`;
+    /* ── Update topbar chips with real live data ── */
+    updateTopbarChips();
+
+    /* ── Update dashboard Live Projects dynamically ── */
+    updateDashboardProjects();
 
     /* ── Re-render all initialised views ── */
     refreshAllViews();
+    // Always render projects & timeline regardless of active view
+    initProjects();
+    initTimeline();
     buildStandup();
 
     /* ── Morning briefing in AI panel after first sync ── */
