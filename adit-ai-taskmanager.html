@@ -170,14 +170,18 @@ body{font-family:'Poppins',sans-serif;background:var(--bg);color:var(--tx);font-
   animation:fadeIn .35s ease both;
   position:relative;z-index:200;
 }
-/* Real adit logo in topbar */
-.topbar-logo{display:flex;align-items:center;gap:8px;}
-.topbar-logo img.main-logo{height:28px;width:auto;}
-.topbar-logo .ai-label{
-  font-size:10px;font-weight:700;color:var(--wh);
-  background:linear-gradient(90deg,var(--tl),var(--or));
-  padding:2px 8px;border-radius:20px;letter-spacing:.5px;
+/* Topbar view title (replaces duplicate logo) */
+.topbar-view-title{display:flex;align-items:center;gap:8px;flex-shrink:0;}
+.topbar-view-icon{
+  font-size:13px;line-height:1;
+  width:28px;height:28px;border-radius:8px;
+  background:var(--or-l);color:var(--or);
+  display:flex;align-items:center;justify-content:center;
+  font-style:normal;flex-shrink:0;
 }
+.topbar-view-name{font-size:14px;font-weight:700;color:var(--nv);letter-spacing:-.2px;}
+body.dark .topbar-view-icon{background:rgba(244,137,31,.12);color:var(--or);}
+body.dark .topbar-view-name{color:#E8F4FF;}
 
 .strip{flex:1;display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;padding:1px 0;}
 .strip::-webkit-scrollbar{display:none;}
@@ -398,7 +402,17 @@ body{font-family:'Poppins',sans-serif;background:var(--bg);color:var(--tx);font-
   overflow:hidden;
   box-shadow:-4px 0 24px rgba(0,45,66,.09);
   animation:slideRight .45s ease both;
-  transition:width .3s cubic-bezier(.4,0,.2,1);
+  position:relative;
+  min-width:280px;max-width:680px;
+}
+.ai-panel-resizer{
+  position:absolute;left:0;top:0;bottom:0;
+  width:5px;cursor:col-resize;
+  background:transparent;z-index:20;
+  transition:background .15s;
+}
+.ai-panel-resizer:hover,.ai-panel-resizer.dragging{
+  background:var(--or);opacity:.5;
 }
 
 /* ── AI Full View — clean minimal redesign ── */
@@ -1017,7 +1031,11 @@ body.dark .ap-input input{color:#D6EAF8;}
 body.dark .ap-input input::placeholder{color:#3D6178;}
 body.dark .bbl{background:#162537!important;border-color:#1E3044!important;color:#C0DAF0!important;}
 body.dark .msg.user .bbl{background:linear-gradient(135deg,#0A3A5C,#0D4E7A)!important;color:#E8F4FF!important;}
-body.dark .chip{background:#13202E!important;border-color:#1E3044!important;color:#8BAEC8!important;}
+/* Topbar chips — preserve semantic colours in dark mode */
+body.dark .chip.c-r{background:rgba(239,68,68,.12)!important;border-color:rgba(239,68,68,.3)!important;color:#F87171!important;}
+body.dark .chip.c-o{background:rgba(244,137,31,.1)!important;border-color:rgba(244,137,31,.3)!important;color:#FB923C!important;}
+body.dark .chip.c-g{background:rgba(15,183,122,.1)!important;border-color:rgba(15,183,122,.3)!important;color:#34D399!important;}
+body.dark .chip.c-t{background:rgba(34,184,207,.1)!important;border-color:rgba(34,184,207,.3)!important;color:#22D3EE!important;}
 body.dark .sug{background:#13202E;border-color:#1E3044;color:#8BAEC8;}
 body.dark .sug:hover{border-color:var(--or);color:var(--or);}
 /* Projects */
@@ -1055,7 +1073,8 @@ body.dark .msg.user .bbl{background:linear-gradient(135deg,#0A4060,#0F5580)!impo
 body.dark .ap-foot{background:#0F1923;border-color:#1D2E40;}
 body.dark .ap-input{background:#162230;border-color:#243446;}
 body.dark .ap-input input{color:var(--tx);}
-body.dark .chip{background:#1D2E40!important;border-color:#243446!important;color:var(--tx-m)!important;}
+/* Fallback for generic chips with no colour class */
+body.dark .chip:not(.c-r):not(.c-o):not(.c-g):not(.c-t){background:#1D2E40!important;border-color:#243446!important;color:var(--tx-m)!important;}
 body.dark .tab{color:var(--tx-s);}body.dark .tab.on{background:#243446;}
 body.dark .tr:hover{background:#1D2E40;}
 body.dark .searchbar{background:#162230;border-color:#243446;color:var(--tx-s);}
@@ -2045,10 +2064,10 @@ body.dark .profile-drop{background:#162230;border-color:#243446;}
 
   <!-- TOPBAR -->
   <div class="topbar">
-    <div class="topbar-logo">
-      <img class="main-logo" src="https://adit.com/storage/settings/logo.png" alt="adit"
-        onerror="this.style.display='none'"/>
-      <span class="ai-label">AI</span>
+    <!-- Dynamic view title — replaces duplicate logo -->
+    <div class="topbar-view-title" id="topbar-view-title">
+      <span class="topbar-view-icon" id="topbar-view-icon"></span>
+      <span class="topbar-view-name" id="topbar-view-name">Dashboard</span>
     </div>
 
     <div class="strip">
@@ -2059,7 +2078,7 @@ body.dark .profile-drop{background:#162230;border-color:#243446;}
       <div class="chip c-t" onclick="this.remove()" title="PUC-Web 97% on track">🚀 PUC-Web 97%</div>
     </div>
 
-    <button class="btn btn-or" onclick="focusAI()">
+    <button class="btn btn-or" onclick="focusAI()" title="New task (N)">
       <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
       New Task
     </button>
@@ -2210,7 +2229,7 @@ body.dark .profile-drop{background:#162230;border-color:#243446;}
           <div class="ch">
             <div class="ct">
               <svg viewBox="0 0 24 24"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
-              Sebastin's Tasks
+              <span id="dash-tasks-title">My Tasks</span>
             </div>
             <div class="tabs">
               <div class="tab on" onclick="tabSwitch(this)">All</div>
@@ -2653,6 +2672,10 @@ body.dark .profile-drop{background:#162230;border-color:#243446;}
             </div>
           </div>
           <div class="ai-fv-topbar-right">
+            <div style="font-size:9px;font-weight:600;color:var(--tx-s);background:var(--bg2);border:1px solid var(--bd);border-radius:20px;padding:3px 10px;display:flex;align-items:center;gap:5px;letter-spacing:.3px">
+              <span style="width:5px;height:5px;border-radius:50%;background:var(--or);display:inline-block;flex-shrink:0"></span>
+              Powered by Claude
+            </div>
             <button class="ai-fv-stats-btn" onclick="toggleFvStats(event)">
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
               Stats
@@ -2698,7 +2721,10 @@ body.dark .profile-drop{background:#162230;border-color:#243446;}
                 <svg viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
               </button>
             </div>
-            <div class="ai-fv-hint-txt">Search all Asana tasks · Create tasks with natural language · Ask about projects & risks</div>
+            <div class="ai-fv-hint-txt">
+              Powered by <strong style="color:var(--or)">Claude AI</strong> · Search all workspace tasks · Create tasks · Ask anything about projects &amp; risks
+              <span style="margin-left:8px;opacity:.6">· <kbd style="font-size:8px;background:var(--bg2);border:1px solid var(--bd);border-radius:3px;padding:1px 4px">N</kbd> new task &nbsp;<kbd style="font-size:8px;background:var(--bg2);border:1px solid var(--bd);border-radius:3px;padding:1px 4px">⌘K</kbd> command</span>
+            </div>
           </div>
         </div>
       </div>
@@ -2940,7 +2966,9 @@ body.dark .profile-drop{background:#162230;border-color:#243446;}
     </div>
 
     <!-- ══════════ AI PANEL ══════════ -->
-    <div class="ai-panel">
+    <div class="ai-panel" id="ai-panel">
+      <!-- Drag handle for resizing -->
+      <div class="ai-panel-resizer" id="ai-panel-resizer" title="Drag to resize"></div>
       <div class="ap-head">
         <div class="ap-row">
           <div class="ap-ico">
@@ -3506,16 +3534,14 @@ async function _fvProcessInput(text) {
     return;
   }
 
-  const needsWsSearch = lower.includes('how many') || lower.includes('search') ||
-    lower.includes('find') || lower.includes('show all') ||
-    (lower.length > 8 && !lower.includes('overdue') && !lower.includes('standup') &&
-     !lower.includes('project') && !lower.includes('priorit') && !lower.includes('summary') &&
-     !lower.includes('briefing') && !lower.includes('weekly') && !lower.includes('workload') &&
-     !lower.includes('delegate') && !lower.includes('status') && !lower.includes('reschedule') &&
-     !lower.includes('escalat'));
+  /* ── Explicit search intent: find/search tasks across workspace ── */
+  const isExplicitSearch =
+    /^(find|search|look up|look for|show me|list)\s+.{3,}/i.test(text) ||
+    /how many .*(tasks?|tickets?|items?)/i.test(text) ||
+    /tasks? (about|related to|with|containing|for|on)\s+\w/i.test(text);
 
-  if (needsWsSearch) {
-    const stopWords = new Set(['how','many','tasks','task','with','the','a','an','is','are','about','for','in','on','my','i','do','have','show','me','find','get','what','which','all','open','closed','are','there']);
+  if (isExplicitSearch) {
+    const stopWords = new Set(['how','many','tasks','task','tickets','ticket','with','the','a','an','is','are','about','for','in','on','my','i','do','have','show','me','find','search','list','look','get','what','which','all','open','related','containing']);
     const keywords = lower.split(/\s+/).filter(w => w.length > 2 && !stopWords.has(w));
     const searchQuery = keywords.join(' ') || text;
 
@@ -3523,29 +3549,28 @@ async function _fvProcessInput(text) {
 
     if (wsResults && wsResults.length > 0) {
       fvTypingEl?.remove(); fvTypingEl = null;
-      const rows = wsResults.slice(0,10).map(t => {
+      const rows = wsResults.slice(0,12).map(t => {
         const proj = t.projects?.[0]?.name || '';
         const due = t.due_on ? new Date(t.due_on).toLocaleDateString('en-US',{month:'short',day:'numeric'}) : '';
         const isOv = t.due_on && new Date(t.due_on) < new Date();
         return `<div class="ai-result-row" onclick="window.open('https://app.asana.com/0/0/${t.gid}','_blank')">
           <div class="ai-result-dot${isOv?' ov':''}"></div>
           <div class="ai-result-name">${t.name}</div>
-          <div class="ai-result-meta">${due?`<strong style="color:${isOv?'var(--rd)':'var(--tx-m)'}">${due}</strong>`:''}${t.assignee?.name?`${t.assignee.name}`:'Unassigned'}${proj?`<br/>${proj}`:''}</div>
+          <div class="ai-result-meta">${due?`<strong style="color:${isOv?'var(--rd)':'var(--tx-m)'}">${due}</strong>`:''}${t.assignee?.name?`<span>${t.assignee.name}</span>`:'Unassigned'}${proj?`<br/><span style="color:var(--or)">${proj}</span>`:''}</div>
         </div>`;
       }).join('');
-      fvAddAIMsg(`Found <strong>${wsResults.length}${wsResults.length===25?'+':''} task${wsResults.length!==1?'s':''}</strong> matching "<em>${searchQuery}</em>" across your workspace:<div class="ai-result-card"><div class="ai-result-head"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg> Search Results — All Workspace Tasks</div>${rows}</div>${wsResults.length>10?`<span class="fv-sug" onclick="window.open('https://app.asana.com/search?q=${encodeURIComponent(searchQuery)}','_blank')">See all in Asana →</span>`:''}
+      fvAddAIMsg(`Found <strong>${wsResults.length}${wsResults.length===25?'+':''} task${wsResults.length!==1?'s':''}</strong> matching "<em>${searchQuery}</em>" across your workspace:<div class="ai-result-card"><div class="ai-result-head"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg> Search Results — All Workspace Tasks</div>${rows}</div>${wsResults.length>12?`<span class="fv-sug" onclick="window.open('https://app.asana.com/search?q=${encodeURIComponent(searchQuery)}','_blank')">See all in Asana →</span>`:''}
 <span class="fv-sug" onclick="fvSendQ('${text.replace(/'/g,"\\'")}')">🔄 Re-search</span>`);
       return;
     }
-
     if (wsResults !== null) {
       fvTypingEl?.remove(); fvTypingEl = null;
-      fvAddAIMsg(`No open tasks found matching "<em>${searchQuery}</em>" across your Asana workspace. The task may be completed, deleted, or use different keywords.<br/><br/><span class="fv-sug" onclick="window.open('https://app.asana.com/search?q=${encodeURIComponent(searchQuery)}','_blank')">🔍 Search in Asana →</span>`);
+      fvAddAIMsg(`No open tasks found for "<em>${searchQuery}</em>" in your workspace.<br/><span class="fv-sug" onclick="window.open('https://app.asana.com/search?q=${encodeURIComponent(searchQuery)}','_blank')">🔍 Try in Asana →</span>`);
       return;
     }
   }
 
-  /* ── Try Claude API for intelligent response ── */
+  /* ── Claude API — primary intelligence for ALL non-search questions ── */
   try {
     const r = await fetch('/api/ask', {
       method: 'POST',
@@ -3569,7 +3594,7 @@ async function _fvProcessInput(text) {
     }
   } catch(e) { /* fall through to local engine */ }
 
-  /* ── Local fallback engine (used when Claude API key not configured) ── */
+  /* ── Local fallback engine (no API key configured) ── */
   fvTypingEl?.remove(); fvTypingEl = null;
   const resp = getResponse(text);
   fvAddAIMsg(resp.html);
@@ -3723,6 +3748,26 @@ function setNav(el) {
     void target.offsetWidth;
     target.classList.add('view-enter');
   });
+
+  // Update topbar view title
+  const VIEW_META = {
+    dashboard:   { name:'Dashboard',        icon:'⊞' },
+    mytasks:     { name:'My Tasks',         icon:'✓' },
+    projects:    { name:'Projects',         icon:'⬡' },
+    timeline:    { name:'Timeline',         icon:'▦' },
+    aditai:      { name:'Adit AI',          icon:'✦' },
+    predictions: { name:'Predictions',      icon:'⚡' },
+    autoassign:  { name:'Auto-Assign',      icon:'⇌' },
+    riskradar:   { name:'Risk Radar',       icon:'◎' },
+    standup:     { name:'Standup AI',       icon:'☰' },
+    reports:     { name:'Report Builder',   icon:'▤' },
+    dashbuilder: { name:'Dashboard Builder',icon:'⊕' },
+  };
+  const meta = VIEW_META[view] || { name: view, icon: '●' };
+  const titleEl = document.getElementById('topbar-view-name');
+  const iconEl  = document.getElementById('topbar-view-icon');
+  if (titleEl) titleEl.textContent = meta.name;
+  if (iconEl)  iconEl.textContent  = meta.icon;
 
   // View-specific init
   const initMap = {
@@ -4602,6 +4647,35 @@ function toggleSidebar() {
   if (btn) btn.textContent = collapsed ? '▶' : '◀';
 }
 
+/* ── AI Panel resize ── */
+(function initPanelResize() {
+  const resizer = document.getElementById('ai-panel-resizer');
+  const panel   = document.getElementById('ai-panel');
+  if (!resizer || !panel) return;
+  let startX, startW;
+  resizer.addEventListener('mousedown', e => {
+    startX = e.clientX;
+    startW = panel.offsetWidth;
+    resizer.classList.add('dragging');
+    document.body.style.userSelect = 'none';
+    document.body.style.cursor = 'col-resize';
+    const onMove = ev => {
+      const delta = startX - ev.clientX; // drag left = expand panel
+      const newW = Math.min(680, Math.max(280, startW + delta));
+      panel.style.width = newW + 'px';
+    };
+    const onUp = () => {
+      resizer.classList.remove('dragging');
+      document.body.style.userSelect = '';
+      document.body.style.cursor = '';
+      document.removeEventListener('mousemove', onMove);
+      document.removeEventListener('mouseup', onUp);
+    };
+    document.addEventListener('mousemove', onMove);
+    document.addEventListener('mouseup', onUp);
+  });
+})();
+
 /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
    TASK FILTERS (All / Overdue / No Date)
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
@@ -4821,7 +4895,13 @@ function cmdSearch(q) {
     });
   }
 
-  if (!html) html = `<div style="padding:20px;text-align:center;color:var(--tx-s);font-size:11px">No results for "<strong>${q}</strong>"</div>`;
+  if (!html && q) html = `<div style="padding:20px;text-align:center;color:var(--tx-s);font-size:11px">No results for "<strong>${q}</strong>"</div>`;
+  if (!html && !q) html = `<div style="padding:16px 20px">
+    <div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--tx-s);margin-bottom:8px">Keyboard Shortcuts</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px 12px;font-size:10.5px">
+      ${[['N','New task'],['T','My Tasks'],['P','Projects'],['A','Adit AI'],['D','Dashboard'],['R','Refresh data'],['⌘K','Command palette'],['Esc','Close / Cancel']].map(([k,v])=>`<div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid var(--bd-l)"><span style="color:var(--tx-m)">${v}</span><kbd style="background:var(--bg2);border:1px solid var(--bd);border-radius:4px;padding:1px 6px;font-size:9px;font-family:inherit;color:var(--tx-s)">${k}</kbd></div>`).join('')}
+    </div>
+  </div>`;
   document.getElementById('cmd-results').innerHTML = html;
   cmdSelIdx = 0;
   updateCmdSel();
@@ -4849,12 +4929,27 @@ function clickNav(label) {
   }
 }
 
-// ⌘K keyboard shortcut
+// Global keyboard shortcuts
 document.addEventListener('keydown', e => {
-  if ((e.metaKey || e.ctrlKey) && e.key === 'k') { e.preventDefault(); openCmdPalette(); }
-  if (e.key === 'Escape') {
-    _closeCmdPalette();
-    closeTaskDetail();
+  const tag = document.activeElement?.tagName;
+  const typing = (tag === 'INPUT' || tag === 'TEXTAREA' || document.activeElement?.isContentEditable);
+
+  if ((e.metaKey || e.ctrlKey) && e.key === 'k') { e.preventDefault(); openCmdPalette(); return; }
+  if (e.key === 'Escape') { _closeCmdPalette(); closeTaskDetail(); return; }
+
+  if (!typing) {
+    // N = new task (focus AI input)
+    if (e.key === 'n' || e.key === 'N') { e.preventDefault(); focusAI(); return; }
+    // P = go to projects
+    if (e.key === 'p' || e.key === 'P') { setNavById('projects'); return; }
+    // T = go to my tasks
+    if (e.key === 't' || e.key === 'T') { setNavById('mytasks'); return; }
+    // A = go to Adit AI
+    if (e.key === 'a' || e.key === 'A') { setNavById('aditai'); return; }
+    // D = go to dashboard
+    if (e.key === 'd' || e.key === 'D') { setNavById('dashboard'); return; }
+    // R = refresh from Asana
+    if (e.key === 'r' || e.key === 'R') { e.preventDefault(); refreshLiveData(); return; }
   }
 });
 
@@ -5184,8 +5279,19 @@ async function fetchLiveData(token) {
       initials: (user.name||'U').split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase(),
       email:    user.email || '',
     };
-    /* Update chat avatar initials with real user */
+    /* Update UI with real user name */
     document.querySelectorAll('.msg-ic.user').forEach(el => el.textContent = WS.me.initials);
+    const firstName = (user.name||'User').split(' ')[0];
+    const dashTitle = document.getElementById('dash-tasks-title');
+    if (dashTitle) dashTitle.textContent = `${firstName}'s Tasks`;
+    const pdName  = document.getElementById('pd-name');
+    const pdEmail = document.getElementById('pd-email');
+    const pdAv    = document.getElementById('pd-av');
+    const profAv  = document.getElementById('profile-av');
+    if (pdName)  pdName.textContent  = user.name  || 'User';
+    if (pdEmail) pdEmail.textContent = user.email || '';
+    if (pdAv)    pdAv.textContent    = WS.me.initials;
+    if (profAv)  profAv.textContent  = WS.me.initials;
     /* Update workspace label in AI panel header */
     const wsLabel = document.getElementById('ap-workspace-label');
     if (wsLabel) wsLabel.textContent = `Asana Intelligence · ${user.workspaces?.[0]?.name || 'Your workspace'}`;
@@ -5218,7 +5324,7 @@ async function fetchLiveData(token) {
 
     // Fetch all accessible projects (Asana scopes this to the user's permissions)
     const projR = await fetch(
-      `${ASANA_BASE}/projects?workspace=${wsGid}&archived=false&opt_fields=gid,name,color,task_counts&limit=100`,
+      `${ASANA_BASE}/projects?workspace=${wsGid}&archived=false&opt_fields=gid,name,color,task_counts.num_tasks,task_counts.num_completed_tasks,task_counts.num_incomplete_tasks&limit=100`,
       { headers: hdrs }
     );
     const projData = await projR.json();
@@ -5289,10 +5395,18 @@ async function fetchLiveData(token) {
     const nb = document.querySelector('.nav-item[data-view="mytasks"] .nb');
     if (nb) nb.textContent = WS.tasks.length;
 
-    /* ── Refresh dashboard KPI numbers ── */
+    /* ── Refresh dashboard KPI numbers + subtexts ── */
     const kpiVals = document.querySelectorAll('.kpi-val');
     const kpiTargets = [totalTasks, totalDone, totalOpen, WS.tasks.length];
     kpiVals.forEach((el,i) => { if (kpiTargets[i] !== undefined) countUp(el, kpiTargets[i], 900); });
+    // Update dynamic subtexts
+    const pctRate = totalTasks > 0 ? Math.round((totalDone/totalTasks)*100) : 0;
+    const overdueCount = WS.tasks.filter(t=>t.overdue).length;
+    const kpiSubs = document.querySelectorAll('.kpi-sub');
+    if (kpiSubs[0]) kpiSubs[0].innerHTML = `Across <span class="up">${allRawProjs.length}</span>&nbsp;projects`;
+    if (kpiSubs[1]) kpiSubs[1].innerHTML = `<span class="up">${pctRate}%</span>&nbsp;completion rate`;
+    if (kpiSubs[2]) kpiSubs[2].innerHTML = `${overdueCount>0?`<span class="dn">${overdueCount} overdue</span>&nbsp;`:''}assigned to you`;
+    if (kpiSubs[3]) kpiSubs[3].innerHTML = `${overdueCount>0?`<span class="dn">${overdueCount} overdue</span>&nbsp;`:''}need attention`;
 
     /* ── Update topbar chips with real live data ── */
     updateTopbarChips();
