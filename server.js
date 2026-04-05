@@ -110,20 +110,56 @@ app.post('/api/ask', async (req, res) => {
     const me     = context?.me || {};
     const kpis   = context?.kpis || {};
 
+    const overdueTasks = tasks.filter(t => t.overdue);
+    const highPriTasks = tasks.filter(t => t.priority === 'high');
+    const critProjects = projs.filter(p => p.status === 'critical' || p.status === 'delayed');
+    const onTrackProjs = projs.filter(p => p.status === 'on-track');
+
     const ctxText = [
-      `User: ${me.name || 'unknown'} (${me.email || ''})`,
-      `Workspace KPIs: ${JSON.stringify(kpis)}`,
-      `Projects (${projs.length}): ${projs.map(p => `${p.name} [${p.status||'active'}, ${p.pct||0}% done]`).join('; ')}`,
-      `My Tasks (${tasks.length}): ${tasks.map(t => `"${t.name}" due:${t.due||t.due_on||'none'} overdue:${t.overdue||false} priority:${t.priority||'normal'} project:${t.project||''}`).join('; ')}`,
+      `=== USER ===`,
+      `Name: ${me.name || 'unknown'} | Email: ${me.email || ''} | Today: ${new Date().toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'})}`,
+      ``,
+      `=== WORKSPACE KPIS ===`,
+      `Total tasks: ${kpis.total||0} | Completed: ${kpis.completed||0} | Open: ${kpis.open||0} | Completion rate: ${kpis.total ? Math.round((kpis.completed/kpis.total)*100) : 0}%`,
+      ``,
+      `=== MY TASKS (${tasks.length} open) ===`,
+      `OVERDUE (${overdueTasks.length}): ${overdueTasks.map(t => `"${t.name}" [was due ${t.due||t.due_on}]`).join(', ') || 'none'}`,
+      `HIGH PRIORITY (${highPriTasks.length}): ${highPriTasks.map(t => `"${t.name}"`).join(', ') || 'none'}`,
+      `ALL TASKS: ${tasks.map(t => `"${t.name}" | due:${t.due||t.due_on||'no date'} | overdue:${t.overdue?'YES':'no'} | priority:${t.priority||'normal'} | project:${t.project||'none'}`).join('\n  ')}`,
+      ``,
+      `=== PROJECTS (${projs.length} active) ===`,
+      `AT RISK / CRITICAL (${critProjects.length}): ${critProjects.map(p => `"${p.name}" ${p.pct}% done, ${p.open||0} open tasks`).join(', ') || 'none'}`,
+      `ON TRACK (${onTrackProjs.length}): ${onTrackProjs.map(p => `"${p.name}" ${p.pct}%`).join(', ') || 'none'}`,
+      `ALL PROJECTS: ${projs.map(p => `"${p.name}" | ${p.pct||0}% | status:${p.status||'active'} | open:${p.open||0}`).join('\n  ')}`,
     ].join('\n');
 
     const body = JSON.stringify({
       model: 'claude-haiku-4-5-20251001',
-      max_tokens: 1024,
-      system: `You are Adit AI, an intelligent work assistant for Adit — a dental software company. You have access to the user's Asana workspace data. Be concise, helpful, and professional. Format your answers in clean HTML: use <strong> for emphasis, <br> for line breaks, <ul>/<li> for lists. Never use markdown syntax like ** or ##. Keep responses focused and under 300 words unless a detailed breakdown is explicitly requested.`,
+      max_tokens: 2048,
+      system: `You are Adit AI — the intelligent work assistant built into Adit's task management platform for a dental software company called Adit. You have REAL, LIVE access to the user's Asana workspace data provided in every message.
+
+YOUR CAPABILITIES:
+- Analyse tasks, projects, workload, deadlines, and team performance from live Asana data
+- Give specific, data-driven answers (not generic advice) — reference ACTUAL task names, project names, and numbers
+- Suggest priorities, flag risks, identify patterns in the data
+- Generate standups, status summaries, delegation recommendations
+- Help plan sprints and estimate effort
+- Answer "what should I focus on today?" with a concrete prioritised list from their REAL tasks
+
+RESPONSE FORMAT (CRITICAL — always follow this):
+- Use clean HTML formatting: <strong> for key terms, <br/> for line breaks, <ul><li> for lists
+- NEVER use markdown (no **, no ##, no ---) — HTML only
+- For data summaries, use: <div style="background:rgba(0,45,66,.06);padding:8px 12px;border-radius:8px;margin:6px 0;border-left:3px solid #F4891F">content here</div>
+- For warnings/overdue: wrap in <span style="color:#EF4444;font-weight:700">
+- For good news/done: wrap in <span style="color:#0FB77A;font-weight:700">
+- Keep answers concise — lead with the most important insight first
+- If referencing a specific task, bold it: <strong>"Task Name"</strong>
+- End actionable responses with 1-2 short suggested follow-up questions as clickable spans
+
+TONE: Direct, specific, data-driven. You are the user's personal chief of staff who knows exactly what's in their Asana workspace. Never be vague. If the data shows 3 overdue tasks, name them. If a project is at risk, say why based on the data.`,
       messages: [{
         role: 'user',
-        content: `Workspace context:\n${ctxText}\n\nUser question: ${question}`
+        content: `Live workspace data:\n${ctxText}\n\nUser question: ${question}`
       }]
     });
 
